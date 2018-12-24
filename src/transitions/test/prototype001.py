@@ -60,8 +60,10 @@ transitions = [
     { 'trigger': 'pedaling', 'source': 'norpm', 'dest': 'rpm' },
     { 'trigger': 'pedalinglow', 'source': 'rpm', 'dest': 'toolowcadence' },
     { 'trigger': 'pedalinghigh', 'source': 'rpm', 'dest': 'toohighcadence' },
-    { 'trigger': 'stoppedaling', 'source': 'rpm', 'dest': 'norpm' }
-    { 'trigger': 'stoppedaling', 'source': 'toolowcadence', 'dest': 'norpm' }
+    { 'trigger': 'pedaling', 'source': 'toolowcadence', 'dest': 'rpm' },
+    { 'trigger': 'pedaling', 'source': 'toohighcadence', 'dest': 'rpm' },
+    { 'trigger': 'stoppedaling', 'source': 'rpm', 'dest': 'norpm' },
+    { 'trigger': 'stoppedaling', 'source': 'toolowcadence', 'dest': 'norpm' },
     { 'trigger': 'stoppedaling', 'source': 'toohighcadence', 'dest': 'norpm' }
 ]
 
