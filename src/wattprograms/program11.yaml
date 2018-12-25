@@ -1,0 +1,8 @@
+Program11:
+         Seq1:
+              Duration: 180
+              Watt: 110
+         Seq2:
+              Duration: 60
+              Watt: 200
+         ...
