@@ -1,3 +1,5 @@
+import time
+
 # Diagram initialization
 import os, sys, inspect, io
 
@@ -84,7 +86,7 @@ machine.add_transition('norpm', 'rpm', 'toolowcadence', 'toohighcadence', before
 wattage.state
 # >>> 'norpm'
 
-sleep(2)
+time.sleep(2)
 
 # And that state can change...
 # forcing the state without a trigger
@@ -93,22 +95,22 @@ wattage.pedaling()
 wattage.state
 # >>> 'rpm'
 
-sleep(2)
+time.sleep(2)
 
 # set the event data for pedaling
 wattage.pedaling(wattage=150, cadence=90)  # keyword args
 wattage.print_cadence()
 # >>> 'Current cadence is 90 rpm.'
 
-sleep(2)
+time.sleep(2)
 
 # set at triger to change the state
-lump.trigger('stoppedaling')
+wattage.trigger('stoppedaling')
 # get the status
-lump.state
+wattage.state
 # >>> 'norpm'
 
-sleep(2)
+time.sleep(2)
 
 # Generating diagram of model ergoFACE
 model = ergoFACE()
