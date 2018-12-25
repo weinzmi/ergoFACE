@@ -126,4 +126,4 @@ machine = GraphMachine(model=model,
                        title="ergoFACE transition diagram",
                        show_conditions=True)
 model.show_graph()
-machine.get_graph().draw('my_state_diagram.png', prog='dot')
+machine.get_graph().draw('ergoFACE_transition_diagram.png', prog='dot')
