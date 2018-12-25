@@ -44,6 +44,7 @@ class ergoFACE(object):
         self.get_graph(**kwargs).draw(stream, prog='dot', format='png')
         display(Image(stream.getvalue()))
 
+    
     # Note that the sole argument is now the EventData instance.
     # This object stores positional arguments passed to the trigger method in the
     # .args property, and stores keywords arguments in the .kwargs dictionary.
@@ -79,6 +80,7 @@ transitions = [
 
 
 
+
 # Initialize
 machine = Machine(wattage, states=states, transitions=transitions, send_event=True, initial='norpm')
 machine.add_transition('norpm', 'rpm', 'toolowcadence', 'toohighcadence', before='set_environment')
@@ -100,8 +102,8 @@ wattage.state
 time.sleep(2)
 
 # set the event data for pedaling
-wattage.pedaling(wattage=150, cadence=90)  # keyword args
-wattage.print_cadence()
+# wattage.pedaling(wattage=150, cadence=90)  # keyword args
+# wattage.print_cadence()
 # >>> 'Current cadence is 90 rpm.'
 
 time.sleep(2)
@@ -124,3 +126,4 @@ machine = GraphMachine(model=model,
                        title="ergoFACE transition diagram",
                        show_conditions=True)
 model.show_graph()
+machine.get_graph().draw('ergoFACE_transition_diagram.png', prog='dot')
