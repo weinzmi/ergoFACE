@@ -8,6 +8,19 @@ logging.basicConfig(level=logging.DEBUG)
 # Set transitions' log level to INFO; DEBUG messages will be omitted
 logging.getLogger('transitions').setLevel(logging.INFO)
 
+# Diagram initialization
+import os, sys, inspect, io
+
+cmd_folder = os.path.realpath(
+    os.path.dirname(
+        os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0])))
+
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+    
+from transitions import *
+from transitions.extensions import GraphMachine
+from IPython.display import Image, display, display_png
 
 # Basic initialization
 class ergoFACE(object):
@@ -25,7 +38,13 @@ class ergoFACE(object):
         self.wattage = 0
         self.cadence = 0
     
+    # graph object is created by the machine
+    def show_graph(self, **kwargs):
+        stream = io.BytesIO()
+        self.get_graph(**kwargs).draw(stream, prog='dot', format='png')
+        display(Image(stream.getvalue()))
 
+    
     # Note that the sole argument is now the EventData instance.
     # This object stores positional arguments passed to the trigger method in the
     # .args property, and stores keywords arguments in the .kwargs dictionary.
@@ -96,3 +115,14 @@ wattage.state
 # >>> 'norpm'
 
 time.sleep(2)
+
+# Generating diagram of model ergoFACE
+model = ergoFACE()
+machine = GraphMachine(model=model, 
+                       states=states, 
+                       transitions=transitions,
+                       initial='norpm',
+                       show_auto_transitions=True, # default value is False
+                       title="ergoFACE transition diagram",
+                       show_conditions=True)
+model.show_graph()
