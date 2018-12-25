@@ -1,4 +1,12 @@
+# Import
 import time
+
+# LOGGING
+# Set up logging; The basic log level will be DEBUG
+import logging
+logging.basicConfig(level=logging.DEBUG)
+# Set transitions' log level to INFO; DEBUG messages will be omitted
+logging.getLogger('transitions').setLevel(logging.INFO)
 
 
 # Basic initialization
@@ -51,12 +59,7 @@ transitions = [
     { 'trigger': 'stoppedaling', 'source': 'toohighcadence', 'dest': 'norpm' }
 ]
 
-# LOGGING
-# Set up logging; The basic log level will be DEBUG
-import logging
-logging.basicConfig(level=logging.DEBUG)
-# Set transitions' log level to INFO; DEBUG messages will be omitted
-logging.getLogger('transitions').setLevel(logging.INFO)
+
 
 
 # Initialize
