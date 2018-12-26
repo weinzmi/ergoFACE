@@ -1,85 +1,84 @@
-Program11:
-    Seq1:
-        Duration: 180
-        Watt: 90
-    Seq2:
-        Duration: 120
-        Watt: 130
-    Seq3:
-        Duration: 120
-        Watt: 110
-    Seq4:
-        Duration: 120
-        Watt: 180
-    Seq5:
-        Duration: 120
-        Watt: 130
-    Seq6:
-        Duration: 60
-        Watt: 250
-    Seq7:
-        Duration: 60
-        Watt: 40
-    Seq8:
-        Duration: 60
-        Watt: 110
-    Seq9:
-        Duration: 60
-        Watt: 150
-    Seq10:
-        Duration: 60
-        Watt: 180
-    Seq11:
-        Duration: 60
-        Watt: 110
-    Seq12:
-        Duration: 60
-        Watt: 250
-    Seq13:
-        Duration: 60
-        Watt: 110
-    Seq14:
-        Duration: 60
-        Watt: 280
-    Seq15:
-        Duration: 60
-        Watt: 110
-    Seq16:
-        Duration: 60
-        Watt: 310
-    Seq17:
-        Duration: 60
-        Watt: 110
-    Seq18:
-        Duration: 60
-        Watt: 280
-    Seq19:
-        Duration: 60
-        Watt: 110
-    Seq20:
-        Duration: 60
-        Watt: 250
-    Seq21:
-        Duration: 60
-        Watt: 110
-    Seq22:
-        Duration: 60
-        Watt: 180
-    Seq23:
-        Duration: 60
-        Watt: 40
-    Seq24:
-        Duration: 60
-        Watt: 110
-    Seq25:
-        Duration: 60
-        Watt: 150
-    Seq26:
-        Duration: 60
-        Watt: 130
-    Seq27:
-        Duration: 60
-        Watt: 110
-    Seq28:
-        Duration: 60
-        Watt: 90
+Seq1:
+    Duration: 180
+    Watt: 90
+Seq2:
+    Duration: 120
+    Watt: 130
+Seq3:
+    Duration: 120
+    Watt: 110
+Seq4:
+    Duration: 120
+    Watt: 180
+Seq5:
+    Duration: 120
+    Watt: 130
+Seq6:
+    Duration: 60
+    Watt: 250
+Seq7:
+    Duration: 60
+    Watt: 40
+Seq8:
+    Duration: 60
+    Watt: 110
+Seq9:
+    Duration: 60
+    Watt: 150
+Seq10:
+    Duration: 60
+    Watt: 180
+Seq11:
+    Duration: 60
+    Watt: 110
+Seq12:
+    Duration: 60
+    Watt: 250
+Seq13:
+    Duration: 60
+    Watt: 110
+Seq14:
+    Duration: 60
+    Watt: 280
+Seq15:
+    Duration: 60
+    Watt: 110
+Seq16:
+    Duration: 60
+    Watt: 310
+Seq17:
+    Duration: 60
+    Watt: 110
+Seq18:
+    Duration: 60
+    Watt: 280
+Seq19:
+    Duration: 60
+    Watt: 110
+Seq20:
+    Duration: 60
+    Watt: 250
+Seq21:
+    Duration: 60
+    Watt: 110
+Seq22:
+    Duration: 60
+    Watt: 180
+Seq23:
+    Duration: 60
+    Watt: 40
+Seq24:
+    Duration: 60
+    Watt: 110
+Seq25:
+    Duration: 60
+    Watt: 150
+Seq26:
+    Duration: 60
+    Watt: 130
+Seq27:
+    Duration: 60
+    Watt: 110
+Seq28:
+    Duration: 60
+    Watt: 90
