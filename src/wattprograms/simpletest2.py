@@ -30,7 +30,7 @@ print(fileList[fileName])
 # ########################
 
 
-f = open(fileName)
+f = open(fileList[fileName])
 program = yaml.safe_load(f)
 f.close()
 
