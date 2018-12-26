@@ -34,10 +34,8 @@ f = open(fileList[fileName])
 program = yaml.safe_load(f)
 f.close()
 
-for program_id in program['Programtest']:
-    # change the structure in yaml to avail program names "programtest"
-    duration = program['Programtest'][program_id]['Duration'] 
-    watt = program['Programtest'][program_id]['Watt'] 
+for program_id in program():
+    duration = program[program_id]['Duration'] 
+    watt = program[program_id]['Watt'] 
     print watt," Watt will be applied for ",duration,"seconds"
     time.sleep(duration)
-    
