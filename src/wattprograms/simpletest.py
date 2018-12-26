@@ -1,7 +1,7 @@
 # this is going to be a simple test of importing yaml data into python and display in console
 
 import yaml
-import os
+import os, sys
 
 #with open("programtest.yaml", 'r') as ymlfile:
 #    cfg = yaml.load(ymlfile)
