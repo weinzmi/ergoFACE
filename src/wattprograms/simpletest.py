@@ -2,10 +2,21 @@
 
 import yaml
 
-with open("programtest.yaml", 'r') as ymlfile:
-    cfg = yaml.load(ymlfile)
+#with open("programtest.yaml", 'r') as ymlfile:
+#    cfg = yaml.load(ymlfile)
 
-for section in cfg:
-    print(section)
-print(cfg['Seq1'])
-print(cfg['Seq2'])
+#for section in cfg:
+#    print(section)
+#print(cfg['Seq1'])
+#print(cfg['Seq2'])
+
+
+for filename in os.listdir(currentPath):
+            print filename
+            if(filename.endswith(".yaml")):
+                with open(os.path.join(currentPath, filename)) as myFile:
+                    results = yaml.load(myFile)
+                    try:
+                        print results["Programtest"]["Seq1"]["Duration"]
+                    except:
+                        print "Problem"
