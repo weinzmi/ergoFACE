@@ -7,6 +7,6 @@ f.close()
 for program_id in program['Programtest']:
     duration = program['Programtest'][program_id]['Duration'] 
     watt = program['Programtest'][program_id]['Watt'] 
-    print watt " Watt will be applied for " duration "seconds"
+    print watt," Watt will be applied for ",duration,"seconds"
     time.sleep(duration)
     
