@@ -7,7 +7,7 @@ with open("programtest.yaml", 'r') as ymlfile:
     cfg = yaml.load(ymlfile)
 
     try:
-        print cfg["Programtest"]["Seq1"]["Duration"]
+        print cfg["Programtest"][1]["Duration"]
     except:
         print "Problem"
 
