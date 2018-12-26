@@ -7,7 +7,7 @@ import time
 # Watt program list and selection
 # ########################
 
-
+# TBD change to automatic directory detection
 items = os.listdir("/home/pi/ergoFACE/src/wattprograms")
 
 fileList = []
@@ -35,6 +35,7 @@ program = yaml.safe_load(f)
 f.close()
 
 for program_id in program['Programtest']:
+    # change the structure in yaml to avail program names "programtest"
     duration = program['Programtest'][program_id]['Duration'] 
     watt = program['Programtest'][program_id]['Watt'] 
     print watt," Watt will be applied for ",duration,"seconds"
