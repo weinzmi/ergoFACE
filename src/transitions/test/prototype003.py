@@ -71,18 +71,24 @@ class ergoFACE(object):
         fileName = int(raw_input("\n\rSelect program [0 - " + str(cnt - 1) + "]: "))
         print(fileList[fileName])
 
-# ##################################
-# apply program
-# ##################################
 
-....def apply_program(self):
         f = open(fileList[fileName])
         program = yaml.safe_load(f)
         f.close()
 
 # ##################################
-# output PWM via GPIO
+# reading RPM via GPIO
 # ##################################
+
+....def read_RPM(self):
+        print("waiting for RPM")
+
+
+
+
+
+
+
 
 
 
@@ -98,7 +104,7 @@ states=['ergoFACE loading', 'program loading', 'pedaling', 'training paused', 't
 transitions = [
     { 'trigger': 'automatic', 'source': 'ergoFACE loading', 'dest': 'program loading' },
     { 'trigger': 'error', 'source': 'ergoFACE loading', 'dest': 'ergoFACE error' },
-    { 'trigger': 'RPM', 'source': 'program loading', 'dest': 'pedaling' , 'before':'select_program', 'after':'apply_program'},
+    { 'trigger': 'RPM', 'source': 'program loading', 'dest': 'pedaling' , 'before':'select_program', 'on_exit':'read_RPM'},
     { 'trigger': 'error', 'source': 'program loading', 'dest': 'ergoFACE error' },
     { 'trigger': 'stop reset', 'source': 'pedaling', 'dest': 'program loading' },
     { 'trigger': 'end of sequence reached', 'source': 'pedaling', 'dest': 'program loading' },
@@ -118,3 +124,9 @@ training.state
 training.automatic()
 
 training.state
+
+training.RPM()
+
+
+
+
