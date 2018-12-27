@@ -2,3 +2,4 @@
 # pycodestyle
 transitions
 pygraphviz
+IPython
