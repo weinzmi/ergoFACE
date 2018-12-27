@@ -33,8 +33,10 @@ class ergoFACE(object):
 
     def __init__(self, name):
 
-        # Type of DAUM
-        self.name = "8008TRS"
+        self.name = name
+
+        # Initiate Daum8008TRS object
+        Daum8008TRS = ergoFACE("DAUM Ergobike 8008 TRS")
 
         # What have we accomplished today?
         self.trainings_completed = 0

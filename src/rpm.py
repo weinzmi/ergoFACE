@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # read_RPM.py
 # 2016-01-20
 # Public Domain
