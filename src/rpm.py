@@ -95,31 +95,31 @@ class reader:
       self.pi.set_watchdog(self.gpio, 0) # cancel watchdog
       self._cb.cancel()
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-   import time
-   import pigpio
-   import read_RPM
+   # import time
+   # import pigpio
+   # # import read_RPM
 
-   RPM_GPIO = 4
-   RUN_TIME = 60.0
-   SAMPLE_TIME = 2.0
+   # RPM_GPIO = 4
+   # RUN_TIME = 60.0
+   # SAMPLE_TIME = 2.0
 
-   pi = pigpio.pi()
+   # pi = pigpio.pi()
 
-   p = read_RPM.reader(pi, RPM_GPIO)
+   # p = self.reader(pi, RPM_GPIO)
 
-   start = time.time()
+   # start = time.time()
 
-   while (time.time() - start) < RUN_TIME:
+   # while (time.time() - start) < RUN_TIME:
 
-      time.sleep(SAMPLE_TIME)
+      # time.sleep(SAMPLE_TIME)
 
-      RPM = p.RPM()
+      # RPM = p.RPM()
      
-      print("RPM={}".format(int(RPM+0.5)))
+      # print("RPM={}".format(int(RPM+0.5)))
 
-   p.cancel()
+   # p.cancel()
 
-   pi.stop()
+   # pi.stop()
 
