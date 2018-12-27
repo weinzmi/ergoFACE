@@ -1,2 +1,0 @@
-comming soon
-# Automated tests
