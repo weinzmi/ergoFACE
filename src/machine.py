@@ -1,13 +1,12 @@
-from transitions import Machine
-from transitions.extensions import GraphMachine
-from IPython.display import Image, display, display_png
+import io
+from transitions import *
 
-import time
-import random
-import yaml
 import logging
 import os, sys, inspect, io
-
+import watt
+from IPython.display import Image, display, display_png
+from transitions import Machine
+from transitions.extensions import GraphMachine
 
 # LOGGING
 # Set up logging; The basic log level will be DEBUG
@@ -15,7 +14,12 @@ logging.basicConfig(level=logging.DEBUG)
 # Set transitions' log level to INFO; DEBUG messages will be omitted
 logging.getLogger('transitions').setLevel(logging.INFO)
 
+cmd_folder = os.path.realpath(
+    os.path.dirname(
+        os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0])))
 
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
 
 class ergoFACE(object):
 
@@ -35,8 +39,6 @@ class ergoFACE(object):
 
         self.name = name
 
-        # Initiate Daum8008TRS object
-        Daum8008TRS = ergoFACE("DAUM Ergobike 8008 TRS")
 
         # What have we accomplished today?
         self.trainings_completed = 0
@@ -47,8 +49,19 @@ class ergoFACE(object):
         self.actual_cadence = 0
         self.actual_speed = 0
 
+        # Initialize Graph machine
+        # self.machine = GraphMachine(model=self,
+        #                            states=ergoFACE.states,
+        #                            initial='ergoFACE loading',
+        #                            show_auto_transitions=False,  # default value is False
+        #                            title="ergoFace state diagram",
+        #                            show_conditions=True)
+
         # Initialize the state machine
-        self.machine = Machine(model=self, states=ergoFACE.states, initial='ergoFACE loading')
+        self.machine = Machine(model=self,
+                               states=ergoFACE.states,
+                               initial='ergoFACE loading'
+                               )
 
         # Add some transitions. We could also define these using a static list of
         # dictionaries, as we did with states above, and then pass the list to
@@ -58,8 +71,8 @@ class ergoFACE(object):
         self.machine.add_transition(trigger='automatic', source='ergoFACE loading', dest='program loading')
 
         # as soon as there is a RPM signal detected, we are in pedaling
-        self.machine.add_transition('RPM', 'program loading', 'pedaling',conditions=['rpm_OK'],
-                         before='select_program',
+        self.machine.add_transition('RPM', 'program loading', 'pedaling',
+                         before='rpm_OK',
                          after='log_data')
 
         # stop or reset lead you back to program loading
@@ -87,59 +100,26 @@ class ergoFACE(object):
                          before='GPIO_PWM_WRITE_0')
         self.machine.add_transition('RPM', 'training paused', 'pedaling', conditions=['rpm_OK'])
 
-        # Our NarcolepticSuperhero can fall asleep at pretty much any time.
-        self.machine.add_transition('nap', '*', 'asleep')
-
-
-
-
-# show a list of YAML file is specific directory and select
-    def select_program(self):
-        items = os.listdir("/home/pi/ergoFACE/src/wattprograms")
-
-        fileList = []
-
-        for names in items:
-            if names.endswith(".yaml"):
-                fileList.append(names)
-
-        cnt = 0
-        for fileName in fileList:
-            sys.stdout.write( "[%d] %s\n\r" %(cnt, fileName) )
-            cnt = cnt + 1
-
-
-        fileName = int(raw_input("\n\rSelect program [0 - " + str(cnt - 1) + "]: "))
-        print(fileList[fileName])
-
-
-        f = open(fileList[fileName])
-        program = yaml.safe_load(f)
-        f.close()
-
-        for program_id in program():
-            duration = program[program_id]['Duration']
-            watt = program[program_id]['Watt']
-            print(watt," Watt will be applied for ",duration,"seconds")
-            time.sleep(duration)
-
-
 
     def rpm(self):
     # return transformed GPIO signal in RPM
         print("TBD - RPM")
     def rpm_OK(self):
     # if the else with minumim RPM signal for TRUE
+        # instantiate a class instance here
+        training = watt.Load()
         print("TBD - RPM OK")
-    #def log_data(self):
-    #    with open("/home/pi/data_log.csv", "a") as log:
-    #        while True:
-    #            rpm = GPIO.....
-    #            power = 
-    #            distance = 
-    #            speed = 
-    #            log.write("{0},{1},{2},{3}\n".format(strftime("%Y-%m-%d %H:%M:%S"),str(rpm),str(power), str(distance), str(speed)))
+        print("start initializing loader")
+        training.load_program()
+    def log_data(self):
+    # saved logged data
+        print("TBD - save done")
 
-    #def restart_ergoFACE(self):
-        
-        # restarting all
+Daum8008 = ergoFACE("Daum8008")
+
+Daum8008.state
+Daum8008.automatic()
+Daum8008.RPM()
+
+# if Graph machine is loaded, uncomment
+# Daum8008.show_graph()
