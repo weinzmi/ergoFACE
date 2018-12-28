@@ -13,12 +13,9 @@ p = rpm.reader(pi, RPM_GPIO)
 start = time.time()
 
 while (time.time() - start) < RUN_TIME:
-
-  time.sleep(SAMPLE_TIME)
-
-  RPM = p.RPM()
- 
-  print("RPM={}".format(int(RPM+0.5)))
+    time.sleep(SAMPLE_TIME)
+    RPM = p.RPM()
+    print("RPM={}".format(int(RPM + 0.5)))
 
 p.cancel()
 
