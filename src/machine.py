@@ -4,6 +4,9 @@ from transitions import *
 import logging
 import os, sys, inspect, io
 import watt
+#  import loadwattprog
+#  import runwattprog
+
 from IPython.display import Image, display, display_png
 from transitions import Machine
 from transitions.extensions import GraphMachine
@@ -109,7 +112,7 @@ class ergoFACE(object):
     def load_program(self):
 
         print("load watt program")
-        watt.load_watt_prog()
+        watt.module_load()
 
 
     def rpm_OK(self):
@@ -122,7 +125,7 @@ class ergoFACE(object):
         # instantiate a class instance here
 
         print("run watt program")
-        watt.run_watt_prog()
+        watt.module_run()
 
 
     def log_data(self):

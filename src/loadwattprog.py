@@ -3,11 +3,12 @@ import sys
 import yaml
 
 
-def load_watt_prog():
+def module_load():
     # TBD change to automatic directory detection
-    global fileName
-    global fileList
+
     global dirName
+    global fileList
+    global fileName
 
     dirName = 'C:\\Users\\weikami\\Documents\\GitHub\\ergoFACE\\src\\wattprogram\\'
     items = os.listdir(dirName)
@@ -25,6 +26,4 @@ def load_watt_prog():
         cnt = cnt + 1
     fileName = int(input("\n\rSelect watt program [0 - " + str(cnt - 1) + "]: "))
     print(fileList[fileName])
-    f = open(dirName + fileList[fileName])
-    program = yaml.safe_load(f)
-    f.close()
+
