@@ -8,7 +8,8 @@ import time
 # ########################
 
 # TBD change to automatic directory detection
-items = os.listdir("/home/pi/ergoFACE/src/wattprograms")
+dirName = 'C:\\Users\\weikami\\Documents\\GitHub\\ergoFACE\\src\\wattprogram\\'
+items = os.listdir(dirName)
 
 fileList = []
 
@@ -22,7 +23,7 @@ for fileName in fileList:
     cnt = cnt + 1
 
 
-fileName = int(raw_input("\n\rSelect log file [0 - " + str(cnt - 1) + "]: "))
+fileName = int(input("\n\rSelect watt program [0 - " + str(cnt - 1) + "]: "))
 print(fileList[fileName])
 
 # ########################
@@ -30,12 +31,12 @@ print(fileList[fileName])
 # ########################
 
 
-f = open(fileList[fileName])
+f = open(dirName + fileList[fileName])
 program = yaml.safe_load(f)
 f.close()
 
-for program_id in program():
-    duration = program[program_id]['Duration'] 
-    watt = program[program_id]['Watt'] 
-    print watt," Watt will be applied for ",duration,"seconds"
+for program_id in program['Prog']:
+    duration = program['Prog'][program_id]['Duration']
+    watt = program['Prog'][program_id]['Watt']
+    print(watt," Watt will be applied for ",duration,"seconds")
     time.sleep(duration)

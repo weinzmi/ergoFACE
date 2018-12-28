@@ -1,0 +1,19 @@
+Prog:
+    Seq1:
+        Duration: 2
+        Watt: 25
+    Seq2:
+        Duration: 2
+        Watt: 40
+    Seq3:
+        Duration: 2
+        Watt: 50
+    Seq4:
+        Duration: 2
+        Watt: 40
+    Seq5:
+        Duration: 2
+        Watt: 25
+    Seq6:
+        Duration: 2
+        Watt: 50

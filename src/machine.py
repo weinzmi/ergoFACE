@@ -19,8 +19,8 @@ logging.getLogger('transitions').setLevel(logging.INFO)
 
 class ergoFACE(object):
 
-    # Define some states for ergoFACE - detail state diagram
-....# https://github.com/weinzmi/ergoFACE/blob/prototype-concept/images/wiki/Detailed%20State%20Diagram%20-%20prototype%20002.png
+# Define some states for ergoFACE - detail state diagram
+# https://github.com/weinzmi/ergoFACE/blob/prototype-concept/images/wiki/Detailed%20State%20Diagram%20-%20prototype%20002.png
     states=['ergoFACE loading', 'program loading', 'pedaling', 'training paused', 'training error', 'ergoFACE error']
 
 
@@ -118,30 +118,28 @@ class ergoFACE(object):
         f.close()
 
         for program_id in program():
-        duration = program[program_id]['Duration'] 
-        watt = program[program_id]['Watt'] 
-        print watt," Watt will be applied for ",duration,"seconds"
-        time.sleep(duration)
+            duration = program[program_id]['Duration']
+            watt = program[program_id]['Watt']
+            print(watt," Watt will be applied for ",duration,"seconds")
+            time.sleep(duration)
 
 
 
     def rpm(self):
-        
-        # return transformed GPIO signal in RPM
-
+    # return transformed GPIO signal in RPM
+        print("TBD - RPM")
     def rpm_OK(self):
-        
-        # if the else with minumim RPM signal for TRUE
+    # if the else with minumim RPM signal for TRUE
+        print("TBD - RPM OK")
+    #def log_data(self):
+    #    with open("/home/pi/data_log.csv", "a") as log:
+    #        while True:
+    #            rpm = GPIO.....
+    #            power = 
+    #            distance = 
+    #            speed = 
+    #            log.write("{0},{1},{2},{3}\n".format(strftime("%Y-%m-%d %H:%M:%S"),str(rpm),str(power), str(distance), str(speed)))
 
-    def log_data(self):
-        with open("/home/pi/data_log.csv", "a") as log:
-            while True:
-                rpm = GPIO.....
-                power = 
-                distance = 
-                speed = 
-                log.write("{0},{1},{2},{3}\n".format(strftime("%Y-%m-%d %H:%M:%S"),str(rpm),str(power), str(distance), str(speed)))
-
-    def restart_ergoFACE(self):
+    #def restart_ergoFACE(self):
         
         # restarting all
