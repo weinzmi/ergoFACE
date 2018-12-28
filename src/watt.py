@@ -19,7 +19,7 @@ for names in items:
 
 cnt = 0
 for fileName in fileList:
-    sys.stdout.write( "[%d] %s\n\r" %(cnt, fileName) )
+    sys.stdout.write("[%d] %s\n\r" % (cnt, fileName))
     cnt = cnt + 1
 
 
@@ -38,5 +38,5 @@ f.close()
 for program_id in program['Prog']:
     duration = program['Prog'][program_id]['Duration']
     watt = program['Prog'][program_id]['Watt']
-    print(watt," Watt will be applied for ",duration,"seconds")
+    print(watt, " Watt will be applied for ", duration, "seconds")
     time.sleep(duration)
