@@ -37,7 +37,7 @@ class ergoFACE(object):
 
     def __init__(self, name):
 
-        self.name = name
+
 
 
         # What have we accomplished today?
@@ -68,12 +68,13 @@ class ergoFACE(object):
         # the Machine initializer as the transitions= argument.
 
         # raspberry is started up and ergoFACE can start.
-        self.machine.add_transition(trigger='automatic', source='ergoFACE loading', dest='program loading')
+        self.machine.add_transition(trigger='automatic', source='ergoFACE loading', dest='program loading',
+                                    after='load_program')
 
         # as soon as there is a RPM signal detected, we are in pedaling
         self.machine.add_transition('RPM', 'program loading', 'pedaling',
-                         before='rpm_OK',
-                         after='log_data')
+                                    before='rpm_OK',
+                                    after='run_program')
 
         # stop or reset lead you back to program loading
         self.machine.add_transition('stop_reset', 'pedaling', 'program loading')
@@ -81,45 +82,61 @@ class ergoFACE(object):
         # training Error status can be entered from '*' (all) states
         # in this state, the fallback is to select program
         self.machine.add_transition('error', ['pedaling', 'training paused'], 'training error',
-                         before='GPIO_PWM_WRITE_0',
-                         after='select_program')
+                                    before='GPIO_PWM_WRITE_0',
+                                    after='select_program')
 
         # ergoFace Error status can be entered from '*' (all) states
         # in this state, the fallback is to select program
         self.machine.add_transition('error', ['program loading', 'ergoFACE loading'], 'ergoFACE error',
-                         after='restart_ergoFACE')
-
+                                    after='restart_ergoFACE')
 
         # at the end of every program, when the last sequence is reached, 
         # the training is completed and will restart again
         self.machine.add_transition('program_finished', 'pedaling', 'program loading',
-                         after='select_program')
+                                    after='select_program')
 
         # when there is noRPM detected, the program will be paused
         self.machine.add_transition('noRPM', 'pedaling', 'training paused',
-                         before='GPIO_PWM_WRITE_0')
-        self.machine.add_transition('RPM', 'training paused', 'pedaling', conditions=['rpm_OK'])
+                                    before='GPIO_PWM_WRITE_0')
+
+        self.machine.add_transition('RPM', 'training paused', 'pedaling',
+                                    conditions=['rpm_OK'])
 
 
-    def rpm(self):
-    # return transformed GPIO signal in RPM
-        print("TBD - RPM")
+
+
+
+    def load_program(self):
+
+        print("load watt program")
+        watt.load_watt_prog()
+
+
     def rpm_OK(self):
-    # if the else with minumim RPM signal for TRUE
+        # return transformed GPIO signal in RPM
+        print("Check if RPM is ok -> YES")
+
+
+    def run_program(self):
+        # if the else with minumim RPM signal for TRUE
         # instantiate a class instance here
-        training = watt.Load()
-        print("TBD - RPM OK")
-        print("start initializing loader")
-        training.load_program()
+
+        print("run watt program")
+        watt.run_watt_prog()
+
+
     def log_data(self):
-    # saved logged data
+        # saved logged data
         print("TBD - save done")
+
+
+
 
 Daum8008 = ergoFACE("Daum8008")
 
-Daum8008.state
-Daum8008.automatic()
-Daum8008.RPM()
+Daum8008.state  # get status
+Daum8008.automatic()  # trigger
+Daum8008.RPM()  # trigger
 
 # if Graph machine is loaded, uncomment
 # Daum8008.show_graph()
