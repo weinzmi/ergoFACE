@@ -1,20 +1,19 @@
-import io
-from transitions import *
-
+##################################
+# machine.py is used to handle the state machine for ergoFACE, states, triggers, conditions,...
+##################################
 import logging
 import os, sys, inspect, io
 import watt
-#  import loadwattprog
-#  import runwattprog
-
+import time
+import pygraphviz
 from IPython.display import Image, display, display_png
 from transitions import Machine
 from transitions.extensions import GraphMachine
 
-# LOGGING
+# issue#4 - central config and parameters to conf.yaml
 # Set up logging; The basic log level will be DEBUG
-logging.basicConfig(level=logging.DEBUG)
 # Set transitions' log level to INFO; DEBUG messages will be omitted
+logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('transitions').setLevel(logging.INFO)
 
 cmd_folder = os.path.realpath(
@@ -24,35 +23,20 @@ cmd_folder = os.path.realpath(
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
+# state machine class
 class ergoFACE(object):
 
-# Define some states for ergoFACE - detail state diagram
-# https://github.com/weinzmi/ergoFACE/blob/prototype-concept/images/wiki/Detailed%20State%20Diagram%20-%20prototype%20002.png
+    # definition of states
     states=['ergoFACE loading', 'program loading', 'pedaling', 'training paused', 'training error', 'ergoFACE error']
 
-
-    # graph object is created by the machine
     def show_graph(self, **kwargs):
         stream = io.BytesIO()
         self.get_graph(**kwargs).draw(stream, prog='dot', format='png')
         display(Image(stream.getvalue()))
 
-
     def __init__(self, name):
 
-
-
-
-        # What have we accomplished today?
-        self.trainings_completed = 0
-        self.trainings_minutes = 0
-        self.trainings_distance = 0
-        self.trainings_power = 0
-        self.actual_wattage = 0
-        self.actual_cadence = 0
-        self.actual_speed = 0
-
-        # Initialize Graph machine
+        # Initialize Graph machine - put in here twice for easy testing w/o graph
         # self.machine = GraphMachine(model=self,
         #                            states=ergoFACE.states,
         #                            initial='ergoFACE loading',
@@ -66,12 +50,11 @@ class ergoFACE(object):
                                initial='ergoFACE loading'
                                )
 
-        # Add some transitions. We could also define these using a static list of
-        # dictionaries, as we did with states above, and then pass the list to
-        # the Machine initializer as the transitions= argument.
+        # Transitions between the states
 
         # raspberry is started up and ergoFACE can start.
         self.machine.add_transition(trigger='automatic', source='ergoFACE loading', dest='program loading',
+                                    before='initialise',
                                     after='load_program')
 
         # as soon as there is a RPM signal detected, we are in pedaling
@@ -82,11 +65,16 @@ class ergoFACE(object):
         # stop or reset lead you back to program loading
         self.machine.add_transition('stop_reset', 'pedaling', 'program loading')
 
+        # RPM OK sub state (not sure if it has to be nested)
+        # this came up during trigger testing, so for failsafe we need this status?
+        #self.machine.add_transition('RPM', 'pedaling', 'PRM OK')
+
+
         # training Error status can be entered from '*' (all) states
         # in this state, the fallback is to select program
-        self.machine.add_transition('error', ['pedaling', 'training paused'], 'training error',
+        self.machine.add_transition('error', ['pedaling', 'training paused', 'RPM', 'noRPM'], 'training error',
                                     before='GPIO_PWM_WRITE_0',
-                                    after='select_program')
+                                    after='load_program')
 
         # ergoFace Error status can be entered from '*' (all) states
         # in this state, the fallback is to select program
@@ -95,8 +83,8 @@ class ergoFACE(object):
 
         # at the end of every program, when the last sequence is reached, 
         # the training is completed and will restart again
-        self.machine.add_transition('program_finished', 'pedaling', 'program loading',
-                                    after='select_program')
+        self.machine.add_transition('program_finished', 'pedaling', 'pedaling',
+                                    after='run_program')
 
         # when there is noRPM detected, the program will be paused
         self.machine.add_transition('noRPM', 'pedaling', 'training paused',
@@ -105,41 +93,54 @@ class ergoFACE(object):
         self.machine.add_transition('RPM', 'training paused', 'pedaling',
                                     conditions=['rpm_OK'])
 
+    # micro programs that are executed depending on the Callback resolution and execution order
+    # https://github.com/pytransitions/transitions#callback-resolution-and-execution-order
 
-
-
+    def initialise(self):
+         print("Initialising ergoFACE, user confirmation required:")
+         # confirm = str(input("set Trigger to go to Status Program loading : "))
 
     def load_program(self):
-
         print("load watt program")
         watt.module_load()
 
-
     def rpm_OK(self):
         # return transformed GPIO signal in RPM
-        print("Check if RPM is ok -> YES")
-
+        print("Check for RPM signal; RPM signal OK")
 
     def run_program(self):
         # if the else with minumim RPM signal for TRUE
         # instantiate a class instance here
-
-        print("run watt program")
+        print("Start the selected watt program")
         watt.module_run()
+        Daum8008.program_finished()
+
+    def GPIO_PWM_WRITE_0(self):
+        print("NO RPM - 0PWM output")
 
 
     def log_data(self):
         # saved logged data
-        print("TBD - save done")
+        print("TBD - log_data")
 
-
-
+##################################
+# simulation of usecases
+##################################
 
 Daum8008 = ergoFACE("Daum8008")
+# Triggers
+print("SIMULATOR:trigger automatic set")
+Daum8008.automatic()
+print("SIMULATOR:wait for 5 seconds")
+time.sleep(5)
+print("SIMULATOR:trigger RPM set")
+Daum8008.RPM()
+time.sleep(10)
+print("SIMULATOR:trigger noRPM set")
+Daum8008.noRPM()
+# Daum8008.error()
+# Daum8008.noRPM()
 
-Daum8008.state  # get status
-Daum8008.automatic()  # trigger
-Daum8008.RPM()  # trigger
 
 # if Graph machine is loaded, uncomment
 # Daum8008.show_graph()
