@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ##################################
 # watt.py is used to handle the load and run of watt programs
 ##################################
@@ -5,11 +6,12 @@ import os
 import sys
 import yaml
 import time
+import pwm
+
 
 
 def module_load():
     # this module is used for listing & seletion of watt programs
-
     # set variables to "global" for handling in other classes, e.g.: machine.py - class ergoFACE
     global fileName
     global fileList
@@ -40,6 +42,13 @@ def module_load():
 
 def module_run():
     # this module is used for loading & run of watt programs
+    # set variables to "global" for handling in other classes, e.g.: machine.py - class ergoFACE
+    global cycle
+    global rpm
+    global watt
+    global duration
+    global cyclecount
+
     # open the yaml stream of the file selected
     program = yaml.safe_load(open(dirName + fileList[fileName]))
     # cycle time used for loop control of the PWM output
@@ -57,10 +66,13 @@ def module_run():
             if rpm >= 30.0:  # check for pedaling
                 # TBD - has to be changed to GPIO output
                 print(watt, " Watt will be applied for ", duration, "seconds")
+                pwm.setup()
+                pwm.loop(watt/800*100)
                 rpm = float(input("RPM: "))
                 time.sleep(cycle)
             else:  # if there is no pedaling; PRM < 30, then loop for pause; no next sequencing from yaml file
                 while rpm < 30:
+                    pwm.destroy()
                     print(" 0 Watt will be applied , Training paused")
                     rpm = float(input("RPM: "))
                     time.sleep(cycle)
