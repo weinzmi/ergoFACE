@@ -111,9 +111,12 @@ class ergoFACE(object):
     def run_program(self):
         # if the else with minumim RPM signal for TRUE
         # instantiate a class instance here
-        print("Start the selected watt program")
-        watt.module_run()
-        Daum8008.program_finished()
+        try:
+            print("Start the selected watt program")
+            watt.module_run()
+            Daum8008.program_finished()
+        except KeyboardInterrupt:
+            Daum8008.error()
 
     def GPIO_PWM_WRITE_0(self):
         print("NO RPM - 0PWM output")

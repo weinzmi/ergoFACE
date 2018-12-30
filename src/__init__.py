@@ -2,5 +2,6 @@
 # be able to access:
 __all__ = [
     'watt',
-    'machine'
+    'machine',
+    'pwm'
     ]

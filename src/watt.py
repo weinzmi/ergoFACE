@@ -18,7 +18,7 @@ def module_load():
     global dirName
     # directory for watt program files
     # issue#4 - central config and parameters to conf.yaml
-    dirName = 'C:\\Users\\weikami\\Documents\\GitHub\\ergoFACE\\src\\wattprogram\\'
+    dirName = "/home/pi/ergoFACE/src/wattprogram/"
     items = os.listdir(dirName)
 
     fileList = []
@@ -48,31 +48,38 @@ def module_run():
     global watt
     global duration
     global cyclecount
+    # myergopwm = pwm.Ergopwm('watt', 12, GPIO.BOARD)  # watt is used as name of __init__ in Ergopwm
 
     # open the yaml stream of the file selected
     program = yaml.safe_load(open(dirName + fileList[fileName]))
+    myergopwm = pwm.Ergopwm()
     # cycle time used for loop control of the PWM output
     cycle = 1
-    rpm = 0.0
+    rpm = 33.3
+    myergopwm.setup()
     # run the watt program
     print(fileList[fileName])
+
     for seq_id in program['Prog']:
         duration = program['Prog'][seq_id]['Duration']
         watt = program['Prog'][seq_id]['Watt']
-
         # loop for control the PWM output
         # not sure, if break for low RPM is necessary here, or if it could be handled by the state machine itself?
         for cyclecount in range(duration):
             if rpm >= 30.0:  # check for pedaling
                 # TBD - has to be changed to GPIO output
                 print(watt, " Watt will be applied for ", duration, "seconds")
-                pwm.setup()
-                pwm.loop(watt/800*100)
-                rpm = float(input("RPM: "))
-                time.sleep(cycle)
+                for i in range(1, cycle*100+1):
+                    myergopwm.output(watt/800*100)
+                    # rpm = float(input("RPM: "))
+                    time.sleep(cycle/100)
+
             else:  # if there is no pedaling; PRM < 30, then loop for pause; no next sequencing from yaml file
-                while rpm < 30:
-                    pwm.destroy()
+                myergopwm.stop()
+                while rpm < 30.0:
                     print(" 0 Watt will be applied , Training paused")
-                    rpm = float(input("RPM: "))
+                    # rpm = float(input("RPM: "))
                     time.sleep(cycle)
+
+    myergopwm.destroy()  # destroy for the automatic loading after finishing the watt program
+    yaml.dump_all(program)
