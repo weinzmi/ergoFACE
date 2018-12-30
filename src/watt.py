@@ -7,7 +7,17 @@ import sys
 import yaml
 import time
 import pwm
+import yamlordereddictloader
 
+
+def get_user_input():
+
+    while True:
+        try:
+            return int(input("\n\rSelect watt program [0 - " + str(cnt - 1) + "]: "))
+
+        except ValueError:
+            print("Invalid input. Please try again!")
 
 
 def module_load():
@@ -16,10 +26,11 @@ def module_load():
     global fileName
     global fileList
     global dirName
+    global cnt
     # directory for watt program files
     # issue#4 - central config and parameters to conf.yaml
     dirName = "/home/pi/ergoFACE/src/wattprogram/"
-    items = os.listdir(dirName)
+    items = sorted(os.listdir(dirName))
 
     fileList = []
     # get list of yaml files in directory
@@ -34,7 +45,7 @@ def module_load():
         cnt = cnt + 1
     # select per index the watt program
     # issue#5 - error handling in watt.py module load
-    fileName = int(input("\n\rSelect watt program [0 - " + str(cnt - 1) + "]: "))
+    fileName = get_user_input()
     print(fileList[fileName])
     f = open(dirName + fileList[fileName])
     f.close()
@@ -51,7 +62,7 @@ def module_run():
     # myergopwm = pwm.Ergopwm('watt', 12, GPIO.BOARD)  # watt is used as name of __init__ in Ergopwm
 
     # open the yaml stream of the file selected
-    program = yaml.safe_load(open(dirName + fileList[fileName]))
+    program = yaml.load(open(dirName + fileList[fileName]), Loader=yamlordereddictloader.Loader)
     myergopwm = pwm.Ergopwm()
     # cycle time used for loop control of the PWM output
     cycle = 1

@@ -3,5 +3,6 @@
 __all__ = [
     'watt',
     'machine',
-    'pwm'
+    'pwm',
+    'yamlordereddictloader'
     ]
