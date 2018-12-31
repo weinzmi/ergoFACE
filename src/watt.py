@@ -62,18 +62,25 @@ def module_run():
     # myergopwm = pwm.Ergopwm('watt', 12, GPIO.BOARD)  # watt is used as name of __init__ in Ergopwm
 
     # open the yaml stream of the file selected
-    program = yaml.load(open(dirName + fileList[fileName]), Loader=yamlordereddictloader.Loader)
+    myyamlload = yaml.load(open(dirName + fileList[fileName]), Loader=yamlordereddictloader.Loader)
     myergopwm = pwm.Ergopwm()
     # cycle time used for loop control of the PWM output
     cycle = 1
     rpm = 33.3
     myergopwm.setup()
     # run the watt program
-    print(fileList[fileName])
+    # print(fileList[fileName])
+    prog = myyamlload['Prog']['Seq1']['Name']
+    description = myyamlload['Prog']['Seq1']['Description']
+    print("Name: ", prog)
+    print("Description: ", description)
 
-    for seq_id in program['Prog']:
-        duration = program['Prog'][seq_id]['Duration']
-        watt = program['Prog'][seq_id]['Watt']
+    for seq_id in myyamlload['Prog']:
+
+        duration = myyamlload['Prog'][seq_id]['Duration']
+        watt = myyamlload['Prog'][seq_id]['Watt']
+
+        print(watt, " Watt will be applied for ", duration, "seconds")
         # loop for control the PWM output
         # not sure, if break for low RPM is necessary here, or if it could be handled by the state machine itself?
         for cyclecount in range(duration):
@@ -93,4 +100,4 @@ def module_run():
                     time.sleep(cycle)
 
     myergopwm.destroy()  # destroy for the automatic loading after finishing the watt program
-    yaml.dump_all(program)
+    yaml.dump_all(myyamlload)
