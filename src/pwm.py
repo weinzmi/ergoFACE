@@ -6,8 +6,6 @@
 # modification: 2018/08/02
 ########################################################################
 import RPi.GPIO as GPIO
-import time
-
 
 class Ergopwm:
 

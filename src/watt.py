@@ -10,16 +10,6 @@ import pwm
 import yamlordereddictloader
 
 
-def get_user_input():
-
-    while True:
-        try:
-            return int(input("\n\rSelect watt program [0 - " + str(cnt - 1) + "]: "))
-
-        except ValueError:
-            print("Invalid input. Please try again!")
-
-
 def module_load():
     # this module is used for listing & seletion of watt programs
     # set variables to "global" for handling in other classes, e.g.: machine.py - class ergoFACE
@@ -37,67 +27,87 @@ def module_load():
     for names in items:
         if names.endswith(".yaml"):
             fileList.append(names)
-
     cnt = 0
     # output the list of yaml files
+    print("watt ------------ installed programs")
     for fileName in fileList:
         sys.stdout.write("[%d] %s\n\r" % (cnt, fileName))
         cnt = cnt + 1
+
     # select per index the watt program
     # issue#5 - error handling in watt.py module load
     fileName = get_user_input()
-    print(fileList[fileName])
+    print("watt ------------ selected File:\n\r", fileList[fileName])
     f = open(dirName + fileList[fileName])
     f.close()
 
 
+def get_user_input():
+
+    while True:
+        try:
+            return int(input("\n\rwatt ------------ Select watt program [0 - " + str(cnt - 1) + "]: "))
+
+        except ValueError:
+            print("wattwatt ------------ Invalid input. Please try again!")
+
 def module_run():
     # this module is used for loading & run of watt programs
-    # set variables to "global" for handling in other classes, e.g.: machine.py - class ergoFACE
+
     global cycle
     global rpm
+    global rpm_limit
     global watt
     global duration
     global cyclecount
-    # myergopwm = pwm.Ergopwm('watt', 12, GPIO.BOARD)  # watt is used as name of __init__ in Ergopwm
 
-    # open the yaml stream of the file selected
+    # create instance of class; open the yaml stream of the file selected
     myyamlload = yaml.load(open(dirName + fileList[fileName]), Loader=yamlordereddictloader.Loader)
+    # create instance of class
     myergopwm = pwm.Ergopwm()
-    # cycle time used for loop control of the PWM output
+    # cycle time used for loop control of watt program sequence parsing, MUST BE 1 SECOND BECAUSE OF YAML STRUCTURE
+    # !!!! cycle time for loop control of PWM signal is connected to this
     cycle = 1
+    # !!!! hardcoded RPM value; has to be changed to RPM GPIO input
     rpm = 33.3
+    # !!!! RPM limit has to be in central config file
+    rpm_limit = 30.0
+    # setup the GPIOs
     myergopwm.setup()
-    # run the watt program
-    # print(fileList[fileName])
+    # Output the name and description of yaml file
     prog = myyamlload['Prog']['Seq1']['Name']
     description = myyamlload['Prog']['Seq1']['Description']
-    print("Name: ", prog)
-    print("Description: ", description)
-
+    print("watt ------------ Name: ", prog)
+    print("watt ------------ Description: ", description)
+    # run the watt program
     for seq_id in myyamlload['Prog']:
-
+        # get the duration and watt from yaml file
         duration = myyamlload['Prog'][seq_id]['Duration']
         watt = myyamlload['Prog'][seq_id]['Watt']
-
-        print(watt, " Watt will be applied for ", duration, "seconds")
-        # loop for control the PWM output
-        # not sure, if break for low RPM is necessary here, or if it could be handled by the state machine itself?
+        print("watt ------------ ", watt, "Watt will be applied for", duration, "seconds")
+        # GPIO output loop of PWM signal
         for cyclecount in range(duration):
-            if rpm >= 30.0:  # check for pedaling
-                # TBD - has to be changed to GPIO output
-                print(watt, " Watt will be applied for ", duration, "seconds")
+            # loop for seq in yaml file, later if/else is used for running and pausing the sequence count
+            if rpm >= rpm_limit:
+                # check for RPM limit
+                print("watt ------------ ", watt, "W --- @ ---", rpm, "RPM")
                 for i in range(1, cycle*100+1):
+                    # write the GPOIs; convert 800w to 100%
+                    # !!!! this must be in central config yaml
                     myergopwm.output(watt/800*100)
-                    # rpm = float(input("RPM: "))
+                    # this sleep is 0.01 second looptime for PWM
                     time.sleep(cycle/100)
-
-            else:  # if there is no pedaling; PRM < 30, then loop for pause; no next sequencing from yaml file
+            else:
+                # # check for RPM limit; pause the sequence of yaml file
                 myergopwm.stop()
-                while rpm < 30.0:
-                    print(" 0 Watt will be applied , Training paused")
-                    # rpm = float(input("RPM: "))
+                # stop GPIO output
+                print("watt ------------ stop GPIO output")
+                while rpm < rpm_limit:
+                    # keep inside while for pausing the sequence of yaml
+                    print("watt ------------ 0 Watt will be applied , Training paused")
                     time.sleep(cycle)
 
-    myergopwm.destroy()  # destroy for the automatic loading after finishing the watt program
+    # destroy for the automatic loading after finishing the watt program
+    myergopwm.destroy()
+    # dump for the automatic loading after finishing the watt program
     yaml.dump_all(myyamlload)
