@@ -1,0 +1,6 @@
+Prog:
+    Seq1:
+        Name: Watt program test 3
+        Description: this is a test watt program description
+        Duration: 3600
+        Watt: 25

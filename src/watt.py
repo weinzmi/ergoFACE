@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-##################################
+########################################################################
 # watt.py is used to handle the load and run of watt programs
-##################################
+########################################################################
 import os
 import sys
 import yaml
 import time
 import pwm
 import yamlordereddictloader
-
 
 def module_load():
     # this module is used for listing & seletion of watt programs
@@ -57,6 +56,8 @@ def module_run():
     global cycle
     global rpm
     global rpm_limit
+    global offset
+    global rawwatt
     global watt
     global duration
     global cyclecount
@@ -73,6 +74,8 @@ def module_run():
     # !!!! RPM limit has to be in central config file
     rpm_limit = 30.0
     # setup the GPIOs
+    offset = 0.0
+    # manual watt offset
     myergopwm.setup()
     # Output the name and description of yaml file
     prog = myyamlload['Prog']['Seq1']['Name']
@@ -84,17 +87,17 @@ def module_run():
         # get the duration and watt from yaml file
         duration = myyamlload['Prog'][seq_id]['Duration']
         watt = myyamlload['Prog'][seq_id]['Watt']
-        print("watt ------------ ", watt, "Watt will be applied for", duration, "seconds")
+        print("watt ------------ ", watt+offset, "Watt will be applied for", duration, "seconds")
         # GPIO output loop of PWM signal
         for cyclecount in range(duration):
             # loop for seq in yaml file, later if/else is used for running and pausing the sequence count
             if rpm >= rpm_limit:
                 # check for RPM limit
-                print("watt ------------ ", watt, "W --- @ ---", rpm, "RPM")
+                print("watt ------------ ", watt+offset, "W --- @ ---", rpm, "RPM")
                 for i in range(1, cycle*100+1):
                     # write the GPOIs; convert 800w to 100%
                     # !!!! this must be in central config yaml
-                    myergopwm.output(watt/800*100)
+                    myergopwm.output((watt+offset)/800*100)
                     # this sleep is 0.01 second looptime for PWM
                     time.sleep(cycle/100)
             else:

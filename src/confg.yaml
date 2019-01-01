@@ -1,9 +1,15 @@
 Daum8008TRS:
   RPM:
+
   PWM:
+    LedPin: 12
+    Frequency: 1000
   WATT:
     dirName: 'C:\\Users\\weikami\\Documents\\GitHub\\ergoFACE\\src\\wattprogram\\'
     cycletime: 1
+    rpm_limit: 30.0
+    max_watt: 800  # used for scaling the output to 100%
+
 
 
 

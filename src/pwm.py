@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 ########################################################################
-# Filename    : BreathingLED.py
-# Description : A breathing LED
-# Author      : freenove
-# modification: 2018/08/02
+# pwm.py is used to set and output the PWM signal on GPIO
 ########################################################################
 import RPi.GPIO as GPIO
 

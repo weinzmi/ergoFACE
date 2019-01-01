@@ -1,6 +1,6 @@
-##################################
+########################################################################
 # machine.py is used to handle the state machine for ergoFACE, states, triggers, conditions,...
-##################################
+########################################################################
 import logging
 import os, sys, inspect, io
 import watt
@@ -20,14 +20,14 @@ logging.getLogger('transitions').setLevel(logging.INFO)
 
 cmd_folder = os.path.realpath(
     os.path.dirname(
-        os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0])))
+        os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0])))
 
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
+
 # state machine class
 class ergoFACE(object):
-
     # definition of states
     states = ['ergoFACE loading',
               'program loading',
@@ -41,11 +41,6 @@ class ergoFACE(object):
                     ]
                }
               ]
-
-    def show_graph(self, **kwargs):
-        stream = io.BytesIO()
-        self.get_graph(**kwargs).draw(stream, prog='dot', format='png')
-        display(Image(stream.getvalue()))
 
     def __init__(self, name):
 
@@ -74,7 +69,7 @@ class ergoFACE(object):
         self.machine.add_transition('LOADED', 'program loading', 'training',
                                     conditions='rpm_OK')
 
-        self.machine.add_transition('RPM', ['training_paused', 'training_finished','training'], 'training_pedaling',
+        self.machine.add_transition('RPM', ['training_paused', 'training_finished', 'training'], 'training_pedaling',
                                     conditions='rpm_OK',
                                     after='run_program')
 
@@ -91,7 +86,7 @@ class ergoFACE(object):
         self.machine.add_transition('ERROR', ['program loading', 'ergoFACE loading', 'training'], 'ergoFACE error',
                                     after='restart_ergoFACE')
 
-        self.machine.add_transition('ERROR', ['training_paused','training_pedaling', 'training_finished'],
+        self.machine.add_transition('ERROR', ['training_paused', 'training_pedaling', 'training_finished'],
                                     'training_error',
                                     before='restart_ergoFACE')
 
@@ -100,14 +95,21 @@ class ergoFACE(object):
         self.machine.add_transition('NO_RPM', 'training', 'training_paused',
                                     before='GPIO_PWM_WRITE_0')
 
+        # draw the whole graph
         self.machine.get_graph().draw('ergoFACE_transition_diagram.png', prog='dot')
 
     # micro programs that are executed depending on the Callback resolution and execution order
     # https://github.com/pytransitions/transitions#callback-resolution-and-execution-order
 
+    # graph object is created by the machine
+    def show_graph(self, **kwargs):
+        stream = io.BytesIO()
+        self.get_graph(**kwargs).draw(stream, prog='dot', format='png')
+        display(Image(stream.getvalue()))
+
     def initialise(self):
-         print("ergoFACE -------- Welcome, Initialising ergoFACE")
-         # confirm = str(input("set Trigger to go to Status Program loading : "))
+        print("ergoFACE -------- Welcome, Initialising ergoFACE")
+        # confirm = str(input("set Trigger to go to Status Program loading : "))
 
     def load_program(self):
         print("ergoFACE -------- Watt program loader,\n\rplease select your program:")
@@ -131,7 +133,7 @@ class ergoFACE(object):
         except KeyboardInterrupt:
             Daum8008.ERROR()
 
-    def pause_program (self):
+    def pause_program(self):
         # stop / halt program
         print("ergoFACE -------- TBD - stop")
 
@@ -142,17 +144,19 @@ class ergoFACE(object):
         # saved logged data
         print("ergoFACE -------- TBD - log_data")
 
-    def restart_ergoFACE (self):
+    def restart_ergoFACE(self):
         # restart
         print("ergoFACE -------- TBD - restart")
+
 
 ##################################
 # simulation of usecases
 ##################################
-
+# instantiate the class
 Daum8008 = ergoFACE("Daum8008")
+
 # if Graph machine is loaded, uncomment
-Daum8008.show_graph()
+# Daum8008.show_graph()
 # Triggers
 
 print("SIMULATOR ------- trigger AUTOMATIC set")
@@ -170,11 +174,8 @@ Daum8008.RPM()
 # print("SIMULATOR ------- wait for 1 second")
 # time.sleep(1)
 
-#Daum8008.NO_RPM()
-#print("SIMULATOR ------- trigger noRPM set")
+# Daum8008.NO_RPM()
+# print("SIMULATOR ------- trigger noRPM set")
 
 # Daum8008.error()
 # Daum8008.noRPM()
-
-
-
