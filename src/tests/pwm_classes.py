@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 ########################################################################
-# pwm.py is used to set and output the PWM signal on GPIO
+# Filename    : BreathingLED.py
+# Description : A breathing LED
+# Author      : freenove
+# modification: 2018/08/02
 ########################################################################
 import RPi.GPIO as GPIO
 
-class Ergopwm:
 
-    LedPin = 12
+class Ergopwm():
 
-    def setup(self):
-        global p
-        GPIO.setmode(GPIO.BOARD)  # Numbers GPIOs by physical location
+    def __init__(self, name, LedPin, mode):
+        self.name = name
+        self.LedPin = LedPin # 12 has to be defined in watt.py as a parameter
+        self.mode = mode
+
+        GPIO.setmode(self.mode)
+
+        # Numbers GPIOs by physical location
         GPIO.setup(self.LedPin, GPIO.OUT)  # Set LedPin's mode is output
         GPIO.output(self.LedPin, GPIO.LOW)  # Set LedPin to low
 
@@ -18,13 +25,14 @@ class Ergopwm:
         self.p.start(0)  # Duty Cycle = 0
 
     def output(self, dc):
+        GPIO.setmode(self.mode)
+        GPIO.setup(self.LedPin, GPIO.OUT)
         self.p.ChangeDutyCycle(dc)  # Change duty cycle
 
-    def stop(self):
-        self.p.stop()
-        GPIO.output(self.LedPin, GPIO.LOW)  # turn off led
-
     def destroy(self):
+        GPIO.setmode(self.mode)
+        GPIO.setup(self.LedPin, GPIO.OUT)  # Set LedPin's mode is output
+        GPIO.output(self.LedPin, GPIO.LOW)
         self.p.stop()
         GPIO.output(self.LedPin, GPIO.LOW)  # turn off led
         GPIO.cleanup()

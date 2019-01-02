@@ -1,5 +1,7 @@
 Prog:
     Seq1:
+        Name: Watt program 11
+        Description: a pyramide training program for experienced users
         Duration: 180
         Watt: 90
     Seq2:

@@ -3,3 +3,4 @@
 transitions
 pygraphviz
 IPython
+yaml

@@ -18,20 +18,14 @@ with open(os.path.join(_here, 'ergoFACE', 'version.py')) as f:
 setup(
     name='ergoFace',
     version=version['__version__'],
-    description=('Hardware & Software interface for Daum Ergobike 8008 TRS'),
+    description='Hardware & Software interface for Daum Ergobike 8008 TRS',
     long_description=long_description,
     author='Michael Weizinger',
     author_email='weinzmi@gmail.com',
     url='https://github.com/weinzmi/ergoFACE',
     license='TBD',
-    packages=['ergoFACE'],
-#   no dependencies in this example
-#   install_requires=[
-#       'dependency==1.2.3',
-#   ],
-#   no scripts in this example
-#   scripts=['bin/a-script'],
     include_package_data=True,
+    packages=['ergoFACE'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Science/Research',

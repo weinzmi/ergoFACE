@@ -1,5 +1,7 @@
 Prog:
     Seq1:
+        Name: Watt program test 0
+        Description: this is a test watt program description
         Duration: 10
         Watt: 25
     Seq2:

@@ -1,125 +1,129 @@
+#!/usr/bin/env python
+
 # read_RPM.py
 # 2016-01-20
 # Public Domain
 
 import time
-import pigpio
+import pigpio  # http://abyz.co.uk/rpi/pigpio/python.html
 
-class reader:
-   """
-   A class to read speedometer pulses and calculate the RPM.
-   """
-   def __init__(self, pi, gpio, pulses_per_rev=1.0, weighting=0.0, min_RPM=5.0):
-      """
-      Instantiate with the Pi and gpio of the RPM signal
-      to monitor.
 
-      Optionally the number of pulses for a complete revolution
-      may be specified.  It defaults to 1.
+class Reader:
+    """
+    A class to read speedometer pulses and calculate the RPM.
+    """
 
-      Optionally a weighting may be specified.  This is a number
-      between 0 and 1 and indicates how much the old reading
-      affects the new reading.  It defaults to 0 which means
-      the old reading has no effect.  This may be used to
-      smooth the data.
+    def __init__(self, pi, gpio, pulses_per_rev=1.0, weighting=0.0, min_RPM=5.0):
+        """
+        Instantiate with the Pi and gpio of the RPM signal
+        to monitor.
 
-      Optionally the minimum RPM may be specified.  This is a
-      number between 1 and 1000.  It defaults to 5.  An RPM
-      less than the minimum RPM returns 0.0.
-      """
-      self.pi = pi
-      self.gpio = gpio
-      self.pulses_per_rev = pulses_per_rev
+        Optionally the number of pulses for a complete revolution
+        may be specified.  It defaults to 1.
 
-      if min_RPM > 1000.0:
-         min_RPM = 1000.0
-      elif min_RPM < 1.0:
-         min_RPM = 1.0
+        Optionally a weighting may be specified.  This is a number
+        between 0 and 1 and indicates how much the old reading
+        affects the new reading.  It defaults to 0 which means
+        the old reading has no effect.  This may be used to
+        smooth the data.
 
-      self.min_RPM = min_RPM
+        Optionally the minimum RPM may be specified.  This is a
+        number between 1 and 1000.  It defaults to 5.  An RPM
+        less than the minimum RPM returns 0.0.
+        """
+        self.pi = pi
+        self.gpio = gpio
+        self.pulses_per_rev = pulses_per_rev
 
-      self._watchdog = 200 # Milliseconds.
+        if min_RPM > 1000.0:
+            min_RPM = 1000.0
+        elif min_RPM < 1.0:
+            min_RPM = 1.0
 
-      if weighting < 0.0:
-         weighting = 0.0
-      elif weighting > 0.99:
-         weighting = 0.99
+        self.min_RPM = min_RPM
 
-      self._new = 1.0 - weighting # Weighting for new reading.
-      self._old = weighting       # Weighting for old reading.
+        self._watchdog = 200  # Milliseconds.
 
-      self._high_tick = None
-      self._period = None
+        if weighting < 0.0:
+            weighting = 0.0
+        elif weighting > 0.99:
+            weighting = 0.99
 
-      pi.set_mode(gpio, pigpio.INPUT)
+        self._new = 1.0 - weighting  # Weighting for new reading.
+        self._old = weighting  # Weighting for old reading.
 
-      self._cb = pi.callback(gpio, pigpio.RISING_EDGE, self._cbf)
-      pi.set_watchdog(gpio, self._watchdog)
+        self._high_tick = None
+        self._period = None
 
-   def _cbf(self, gpio, level, tick):
+        pi.set_mode(gpio, pigpio.INPUT)
 
-      if level == 1: # Rising edge.
+        self._cb = pi.callback(gpio, pigpio.RISING_EDGE, self._cbf)
+        pi.set_watchdog(gpio, self._watchdog)
 
-         if self._high_tick is not None:
-            t = pigpio.tickDiff(self._high_tick, tick)
+    def _cbf(self, gpio, level, tick):
+
+        if level == 1:  # Rising edge.
+
+            if self._high_tick is not None:
+                t = pigpio.tickDiff(self._high_tick, tick)
+
+                if self._period is not None:
+                    self._period = (self._old * self._period) + (self._new * t)
+                else:
+                    self._period = t
+
+            self._high_tick = tick
+
+        elif level == 2:  # Watchdog timeout.
 
             if self._period is not None:
-               self._period = (self._old * self._period) + (self._new * t)
-            else:
-               self._period = t
+                if self._period < 2000000000:
+                    self._period += (self._watchdog * 1000)
 
-         self._high_tick = tick
+    def RPM(self):
+        """
+        Returns the RPM.
+        """
+        RPM = 0.0
+        if self._period is not None:
+            RPM = 60000000.0 / (self._period * self.pulses_per_rev)
+            if RPM < self.min_RPM:
+                RPM = 0.0
 
-      elif level == 2: # Watchdog timeout.
+        return RPM
 
-         if self._period is not None:
-            if self._period < 2000000000:
-               self._period += (self._watchdog * 1000)
+    def cancel(self):
+        """
+        Cancels the reader and releases resources.
+        """
+        self.pi.set_watchdog(self.gpio, 0)  # cancel watchdog
+        self._cb.cancel()
 
-   def RPM(self):
-      """
-      Returns the RPM.
-      """
-      RPM = 0.0
-      if self._period is not None:
-         RPM = 60000000.0 / (self._period * self.pulses_per_rev)
-         if RPM < self.min_RPM:
-            RPM = 0.0
 
-      return RPM
+if __name__ == "__main__":
 
-   def cancel(self):
-      """
-      Cancels the reader and releases resources.
-      """
-      self.pi.set_watchdog(self.gpio, 0) # cancel watchdog
-      self._cb.cancel()
+    import time
+    import pigpio
+    import rpm
 
-# if __name__ == "__main__":
+    RPM_GPIO = 4
+    RUN_TIME = 60.0
+    SAMPLE_TIME = 2.0
 
-   # import time
-   # import pigpio
-   # # import read_RPM
+    pi = pigpio.pi()
 
-   # RPM_GPIO = 4
-   # RUN_TIME = 60.0
-   # SAMPLE_TIME = 2.0
+    p = rpm.Reader(pi, RPM_GPIO)
 
-   # pi = pigpio.pi()
+    start = time.time()
 
-   # p = self.reader(pi, RPM_GPIO)
+    while (time.time() - start) < RUN_TIME:
+        time.sleep(SAMPLE_TIME)
 
-   # start = time.time()
+        RPM = p.RPM()
 
-   # while (time.time() - start) < RUN_TIME:
+        print("RPM={}".format(int(RPM + 0.5)))
 
-      # time.sleep(SAMPLE_TIME)
+    p.cancel()
 
-      # RPM = p.RPM()
-     
-      # print("RPM={}".format(int(RPM+0.5)))
-
-   # p.cancel()
-
-   # pi.stop()
+    pi.stop()
 

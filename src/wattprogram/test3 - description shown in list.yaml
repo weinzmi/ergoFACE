@@ -1,21 +1,21 @@
 Prog:
     Seq1:
-        Name: Watt program test 1
+        Name: Watt program test 3
         Description: this is a test watt program description
         Duration: 2
-        Watt: 25
+        Watt: 100
     Seq2:
         Duration: 2
-        Watt: 40
+        Watt: 200
     Seq3:
         Duration: 2
-        Watt: 50
+        Watt: 300
     Seq4:
         Duration: 2
-        Watt: 40
+        Watt: 400
     Seq5:
         Duration: 2
-        Watt: 25
+        Watt: 200
     Seq6:
         Duration: 2
-        Watt: 50
+        Watt: 100
