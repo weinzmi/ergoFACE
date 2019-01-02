@@ -1,14 +1,15 @@
 ########################################################################
-# machine.py is used to handle the state machine for ergoFACE, states, triggers, conditions,...
+# machine.py is used to handle the state machine
+# for ergoFACE, states, triggers, conditions,...
 ########################################################################
 import logging
-import os, sys, inspect, io
+import os
+import sys
+import inspect
+import io
 import watt
 import time
-import pygraphviz
 from IPython.display import Image, display, display_png
-from transitions import Machine
-from transitions.extensions import GraphMachine
 from transitions.extensions import HierarchicalGraphMachine
 from IPython.display import Image, display, display_png
 
@@ -18,9 +19,11 @@ from IPython.display import Image, display, display_png
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('transitions').setLevel(logging.INFO)
 
+
 cmd_folder = os.path.realpath(
     os.path.dirname(
-        os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0])))
+        os.path.abspath(os.path.split(inspect.getfile
+                                      (inspect.currentframe()))[0])))
 
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
@@ -37,20 +40,21 @@ class ergoFACE(object):
                    ['pedaling',
                     'paused',
                     'finished',
-                    'error'
-                    ]
+                    'error']
                }
               ]
 
     def __init__(self, name):
 
-        # Initialize Graph machine - put in here twice for easy testing w/o graph
-        self.machine = HierarchicalGraphMachine(model=self,
-                                                states=ergoFACE.states,
-                                                initial='ergoFACE loading',
-                                                show_auto_transitions=False,  # default value is False
-                                                title="ergoFace state diagram",
-                                                show_conditions=True)
+        # Initialize Graph machine
+        # put in here twice for easy testing w/o graph
+        self.machine = HierarchicalGraphMachine(
+            model=self,
+            states=ergoFACE.states,
+            initial='ergoFACE loading',
+            show_auto_transitions=False,
+            title="ergoFace state diagram",
+            show_conditions=True)
 
         # Initialize the state machine
         # self.machine = Machine(model=self,
@@ -61,45 +65,76 @@ class ergoFACE(object):
         # Transitions between the states
 
         # raspberry is started up and ergoFACE can start.
-        self.machine.add_transition(trigger='AUTOMATIC', source='ergoFACE loading', dest='program loading',
-                                    before='initialise',
-                                    after='load_program')
+        self.machine.add_transition(
+            trigger='AUTOMATIC',
+            source='ergoFACE loading',
+            dest='program loading',
+            before='initialise',
+            after='load_program')
 
         # as soon as there is a RPM signal detected, we are in training
-        self.machine.add_transition('LOADED', 'program loading', 'training',
-                                    conditions='rpm_OK')
+        self.machine.add_transition(
+            'LOADED',
+            'program loading',
+            'training',
+            conditions='rpm_OK')
 
-        self.machine.add_transition('RPM', ['training_paused', 'training_finished', 'training'], 'training_pedaling',
-                                    conditions='rpm_OK',
-                                    after='run_program')
+        self.machine.add_transition(
+            'RPM',
+            ['training_paused', 'training_finished', 'training'],
+            'training_pedaling',
+            conditions='rpm_OK',
+            after='run_program')
 
-        self.machine.add_transition('NO_RPM', 'training_pedaling', 'training_paused',
-                                    before='pause_program')
+        self.machine.add_transition(
+            'NO_RPM',
+            'training_pedaling',
+            'training_paused',
+            before='pause_program')
 
-        self.machine.add_transition('RESET', ['training', 'training_error'], 'program loading',
-                                    conditions=['rpm_OK'],
-                                    after='load_program')
+        self.machine.add_transition(
+            'RESET',
+            ['training', 'training_error'],
+            'program loading',
+            conditions=['rpm_OK'],
+            after='load_program')
 
-        self.machine.add_transition('RESET', 'ergoFACE error', 'ergoFACE loading',
-                                    before='restart_ergoFACE')
+        self.machine.add_transition(
+            'RESET',
+            'ergoFACE error',
+            'ergoFACE loading',
+            before='restart_ergoFACE')
 
-        self.machine.add_transition('ERROR', ['program loading', 'ergoFACE loading', 'training'], 'ergoFACE error',
-                                    after='restart_ergoFACE')
+        self.machine.add_transition(
+            'ERROR',
+            ['program loading', 'ergoFACE loading', 'training'],
+            'ergoFACE error',
+            after='restart_ergoFACE')
 
-        self.machine.add_transition('ERROR', ['training_paused', 'training_pedaling', 'training_finished'],
-                                    'training_error',
-                                    before='restart_ergoFACE')
+        self.machine.add_transition(
+            'ERROR',
+            ['training_paused', 'training_pedaling', 'training_finished'],
+            'training_error',
+            before='restart_ergoFACE')
 
-        self.machine.add_transition('FINISH', 'training_pedaling', 'training_finished')
+        self.machine.add_transition(
+            'FINISH',
+            'training_pedaling',
+            'training_finished')
 
-        self.machine.add_transition('NO_RPM', 'training', 'training_paused',
-                                    before='GPIO_PWM_WRITE_0')
+        self.machine.add_transition(
+            'NO_RPM',
+            'training',
+            'training_paused',
+            before='GPIO_PWM_WRITE_0')
 
         # draw the whole graph
-        self.machine.get_graph().draw('ergoFACE_transition_diagram.png', prog='dot')
+        self.machine.get_graph().draw(
+            'ergoFACE_transition_diagram.png', prog='dot'
+            )
 
-    # micro programs that are executed depending on the Callback resolution and execution order
-    # https://github.com/pytransitions/transitions#callback-resolution-and-execution-order
+    # micro programs that are executed depending on the Callback resolution
+    # and execution order
 
     # graph object is created by the machine
     def show_graph(self, **kwargs):
@@ -108,11 +143,13 @@ class ergoFACE(object):
         display(Image(stream.getvalue()))
 
     def initialise(self):
-        print("ergoFACE -------- Welcome, Initialising ergoFACE")
+        print(
+            "ergoFACE -------- Welcome, Initialising ergoFACE")
         # confirm = str(input("set Trigger to go to Status Program loading : "))
 
     def load_program(self):
-        print("ergoFACE -------- Watt program loader,\n\rplease select your program:")
+        print(
+            "ergoFACE -------- Watt program loader,\n\rplease select your program:")
         watt.module_load()
 
     def rpm_OK(self):

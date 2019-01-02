@@ -9,9 +9,11 @@ import time
 import pwm
 import yamlordereddictloader
 
+
 def module_load():
     # this module is used for listing & seletion of watt programs
-    # set variables to "global" for handling in other classes, e.g.: machine.py - class ergoFACE
+    # set variables to "global" for handling in other classes,
+    # e.g.: machine.py - class ergoFACE
     global fileName
     global fileList
     global dirName
@@ -50,6 +52,7 @@ def get_user_input():
         except ValueError:
             print("wattwatt ------------ Invalid input. Please try again!")
 
+
 def module_run():
     # this module is used for loading & run of watt programs
 
@@ -63,10 +66,12 @@ def module_run():
     global cyclecount
 
     # create instance of class; open the yaml stream of the file selected
-    myyamlload = yaml.load(open(dirName + fileList[fileName]), Loader=yamlordereddictloader.Loader)
+    myyamlload = yaml.load(open(dirName + fileList[fileName]),
+                           Loader=yamlordereddictloader.Loader)
     # create instance of class
     myergopwm = pwm.Ergopwm()
-    # cycle time used for loop control of watt program sequence parsing, MUST BE 1 SECOND BECAUSE OF YAML STRUCTURE
+    # cycle time used for loop control of watt program sequence parsing,
+    # MUST BE 1 SECOND BECAUSE OF YAML STRUCTURE
     # !!!! cycle time for loop control of PWM signal is connected to this
     cycle = 1
     # !!!! hardcoded RPM value; has to be changed to RPM GPIO input
@@ -87,13 +92,16 @@ def module_run():
         # get the duration and watt from yaml file
         duration = myyamlload['Prog'][seq_id]['Duration']
         watt = myyamlload['Prog'][seq_id]['Watt']
-        print("watt ------------ ", watt+offset, "Watt will be applied for", duration, "seconds")
+        print("watt ------------ ", watt+offset,
+              "Watt will be applied for", duration, "seconds")
         # GPIO output loop of PWM signal
         for cyclecount in range(duration):
-            # loop for seq in yaml file, later if/else is used for running and pausing the sequence count
+            # loop for seq in yaml file, later if/else is used for running and
+            # pausing the sequence count
             if rpm >= rpm_limit:
                 # check for RPM limit
-                print("watt ------------ ", watt+offset, "W --- @ ---", rpm, "RPM")
+                print("watt ------------ ", watt+offset,
+                      "W --- @ ---", rpm, "RPM")
                 for i in range(1, cycle*100+1):
                     # write the GPOIs; convert 800w to 100%
                     # !!!! this must be in central config yaml
