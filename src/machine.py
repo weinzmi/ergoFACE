@@ -145,7 +145,7 @@ class ergoFACE(object):
     def initialise(self):
         print(
             "ergoFACE -------- Welcome, Initialising ergoFACE")
-        # confirm = str(input("set Trigger to go to Status Program loading : "))
+        # confirm = str(input("set Trigger to go to Status Program loading :"))
 
     def load_program(self):
         print(

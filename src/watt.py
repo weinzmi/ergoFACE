@@ -47,7 +47,8 @@ def get_user_input():
 
     while True:
         try:
-            return int(input("\n\rwatt ------------ Select watt program [0 - " + str(cnt - 1) + "]: "))
+            return int(input("\n\rwatt ------------ Select watt program [0 - "
+                             + str(cnt - 1) + "]: "))
 
         except ValueError:
             print("wattwatt ------------ Invalid input. Please try again!")
