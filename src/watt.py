@@ -8,6 +8,9 @@ import yaml
 import time
 import pwm
 import yamlordereddictloader
+import csv
+
+CSVHEADER = ['TIME', 'POWER', 'CADENCE']
 
 
 def module_load():
@@ -54,7 +57,7 @@ def get_user_input():
             print("wattwatt ------------ Invalid input. Please try again!")
 
 
-def module_run():
+def module_run(csvfile):
     # this module is used for loading & run of watt programs
 
     global cycle
@@ -71,6 +74,10 @@ def module_run():
                            Loader=yamlordereddictloader.Loader)
     # create instance of class
     myergopwm = pwm.Ergopwm()
+    # initiation of CSV file header and writer
+    csv_writer = csv.writer(csvfile)
+    csv_writer.writerow(CSVHEADER)
+
     # cycle time used for loop control of watt program sequence parsing,
     # MUST BE 1 SECOND BECAUSE OF YAML STRUCTURE
     # !!!! cycle time for loop control of PWM signal is connected to this
@@ -90,6 +97,9 @@ def module_run():
     print("watt ------------ Description: ", description)
     # run the watt program
     for seq_id in myyamlload['Prog']:
+        # get date and time for filename
+        # open csv file for training session
+
         # get the duration and watt from yaml file
         duration = myyamlload['Prog'][seq_id]['Duration']
         watt = myyamlload['Prog'][seq_id]['Watt']
@@ -103,6 +113,11 @@ def module_run():
                 # check for RPM limit
                 print("watt ------------ ", watt+offset,
                       "W --- @ ---", rpm, "RPM")
+                # write data to csv
+                timestr = time.strftime("%Y%m%d-%H%M%S")
+                csv_writer.writerow([timestr, watt, rpm])
+                csvfile.flush()
+
                 for i in range(1, cycle*100+1):
                     # write the GPOIs; convert 800w to 100%
                     # !!!! this must be in central config yaml
@@ -118,6 +133,8 @@ def module_run():
                     # keep inside while for pausing the sequence of yaml
                     print("watt ------------ 0 Watt will be applied , Training paused")
                     time.sleep(cycle)
+
+    # close training csv file
 
     # destroy for the automatic loading after finishing the watt program
     myergopwm.destroy()

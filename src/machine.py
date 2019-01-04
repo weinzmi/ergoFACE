@@ -164,7 +164,12 @@ class ergoFACE(object):
         # instantiate a class instance here
         try:
             print("ergoFACE -------- Start the selected watt program")
-            watt.module_run()
+            # !!!TBD dirName and csvName have to be in central yaml config
+            dirName = "/home/pi/ergoFACE/trainings/"
+            csvName = time.strftime("%Y%m%d-%H%M%S")
+            # before running the program, open CSV file and handover
+            with open(dirName + csvName + '.csv', 'w') as csvfile:
+                watt.module_run(csvfile)
             Daum8008.FINISH()
             Daum8008.RPM()
         except KeyboardInterrupt:
