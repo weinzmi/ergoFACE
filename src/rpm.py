@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-
-# read_RPM.py
-# 2016-01-20
-# Public Domain
+#!/usr/bin/env python3
+########################################################################
+# rpm.py is used to receive and evaluate the RPM signal
+########################################################################
 
 import time
 import pigpio  # http://abyz.co.uk/rpi/pigpio/python.html
@@ -13,7 +12,8 @@ class Reader:
     A class to read speedometer pulses and calculate the RPM.
     """
 
-    def __init__(self, pi, gpio, pulses_per_rev=1.0, weighting=0.0, min_RPM=5.0):
+    def __init__(self, pi, gpio, pulses_per_rev=1.0,
+                 weighting=0.0, min_RPM=5.0):
         """
         Instantiate with the Pi and gpio of the RPM signal
         to monitor.
@@ -126,4 +126,3 @@ if __name__ == "__main__":
     p.cancel()
 
     pi.stop()
-
