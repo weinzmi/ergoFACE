@@ -6,12 +6,12 @@ import logging
 import os
 import sys
 import inspect
-import io
+# import io
 import watt
 import time
-from IPython.display import Image, display, display_png
+# from IPython.display import Image, display, display_png
 from transitions.extensions import HierarchicalGraphMachine
-from IPython.display import Image, display, display_png
+# from IPython.display import Image, display, display_png
 
 # issue#4 - central config and parameters to conf.yaml
 # Set up logging; The basic log level will be DEBUG
@@ -137,10 +137,10 @@ class ergoFACE(object):
     # and execution order
 
     # graph object is created by the machine
-    def show_graph(self, **kwargs):
-        stream = io.BytesIO()
-        self.get_graph(**kwargs).draw(stream, prog='dot', format='png')
-        display(Image(stream.getvalue()))
+    # def show_graph(self, **kwargs):
+    #     stream = io.BytesIO()
+    #     self.get_graph(**kwargs).draw(stream, prog='dot', format='png')
+    #     display(Image(stream.getvalue()))
 
     def initialise(self):
         print(
@@ -149,7 +149,8 @@ class ergoFACE(object):
 
     def load_program(self):
         print(
-            "ergoFACE -------- Watt program loader,\n\rplease select your program:")
+            "ergoFACE -------- Watt program loader,\n\r"
+            "please select your program:")
         watt.module_load()
 
     def rpm_OK(self):
