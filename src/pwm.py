@@ -4,6 +4,7 @@
 ########################################################################
 import RPi.GPIO as GPIO
 
+
 class Ergopwm:
 
     LedPin = 12
@@ -14,7 +15,7 @@ class Ergopwm:
         GPIO.setup(self.LedPin, GPIO.OUT)  # Set LedPin's mode is output
         GPIO.output(self.LedPin, GPIO.LOW)  # Set LedPin to low
 
-        self.p = GPIO.PWM(self.LedPin, 1000)  # set Frequece to 1KHz
+        self.p = GPIO.PWM(self.LedPin, 61.5)  # set Frequece to 61.5 Hz
         self.p.start(0)  # Duty Cycle = 0
 
     def output(self, dc):

@@ -8,10 +8,16 @@ import yaml
 import time
 import pwm
 import yamlordereddictloader
+import csv
+import math
+
+CSVHEADER = ['TIME', 'POWER', 'CADENCE', 'DUTYCYCLE']
+
 
 def module_load():
     # this module is used for listing & seletion of watt programs
-    # set variables to "global" for handling in other classes, e.g.: machine.py - class ergoFACE
+    # set variables to "global" for handling in other classes,
+    # e.g.: machine.py - class ergoFACE
     global fileName
     global fileList
     global dirName
@@ -45,12 +51,38 @@ def get_user_input():
 
     while True:
         try:
-            return int(input("\n\rwatt ------------ Select watt program [0 - " + str(cnt - 1) + "]: "))
+            return int(input("\n\rwatt ------------ Select watt program [0 - "
+                             + str(cnt - 1) + "]: "))
 
         except ValueError:
             print("wattwatt ------------ Invalid input. Please try again!")
 
-def module_run():
+
+def dutycycle_model():
+
+    global factor_a
+    global factor_b
+    global exponent
+    global factor_c
+    global conversion
+    global reference_cadence
+    global dutycycle
+
+    factor_a = 6.4
+    factor_b = 70.252
+    exponent = -0.571
+    factor_c = 50.0
+    reference_cadence = 75.0
+
+    conversion = ((factor_c + rpm)/(factor_c + reference_cadence))
+    # not sure if the 100 -  is neccessary here, in CSV it is shown correct,
+    # but on oscilloscope it is reversed
+    dutycycle = 100 - (factor_b * math.pow(watt + offset, exponent)
+                       * factor_a * conversion)
+    return dutycycle
+
+
+def module_run(csvfile):
     # this module is used for loading & run of watt programs
 
     global cycle
@@ -63,14 +95,20 @@ def module_run():
     global cyclecount
 
     # create instance of class; open the yaml stream of the file selected
-    myyamlload = yaml.load(open(dirName + fileList[fileName]), Loader=yamlordereddictloader.Loader)
+    myyamlload = yaml.load(open(dirName + fileList[fileName]),
+                           Loader=yamlordereddictloader.Loader)
     # create instance of class
     myergopwm = pwm.Ergopwm()
-    # cycle time used for loop control of watt program sequence parsing, MUST BE 1 SECOND BECAUSE OF YAML STRUCTURE
+    # initiation of CSV file header and writer
+    csv_writer = csv.writer(csvfile)
+    csv_writer.writerow(CSVHEADER)
+
+    # cycle time used for loop control of watt program sequence parsing,
+    # MUST BE 1 SECOND BECAUSE OF YAML STRUCTURE
     # !!!! cycle time for loop control of PWM signal is connected to this
     cycle = 1
     # !!!! hardcoded RPM value; has to be changed to RPM GPIO input
-    rpm = 33.3
+    rpm = 75.0
     # !!!! RPM limit has to be in central config file
     rpm_limit = 30.0
     # setup the GPIOs
@@ -84,20 +122,33 @@ def module_run():
     print("watt ------------ Description: ", description)
     # run the watt program
     for seq_id in myyamlload['Prog']:
+        # get date and time for filename
+        # open csv file for training session
+
         # get the duration and watt from yaml file
         duration = myyamlload['Prog'][seq_id]['Duration']
         watt = myyamlload['Prog'][seq_id]['Watt']
-        print("watt ------------ ", watt+offset, "Watt will be applied for", duration, "seconds")
+        print("watt ------------ ", watt+offset,
+              "Watt will be applied for", duration, "seconds")
         # GPIO output loop of PWM signal
         for cyclecount in range(duration):
-            # loop for seq in yaml file, later if/else is used for running and pausing the sequence count
+            # loop for seq in yaml file, later if/else is used for running and
+            # pausing the sequence count
             if rpm >= rpm_limit:
+                # run duty cycle model for watt to PWM calculation every 1sec
+                dutycycle_model()
                 # check for RPM limit
-                print("watt ------------ ", watt+offset, "W --- @ ---", rpm, "RPM")
+                print("watt ------------ ", watt+offset,
+                      "W --- @ ---", rpm, "RPM")
+                # write data to csv
+                timestr = time.strftime("%Y%m%d-%H%M%S")
+                csv_writer.writerow([timestr, watt, rpm, dutycycle])
+                csvfile.flush()
+
                 for i in range(1, cycle*100+1):
-                    # write the GPOIs; convert 800w to 100%
+                    # duty cycle model is calulatedin dev dutycycle_model()
                     # !!!! this must be in central config yaml
-                    myergopwm.output((watt+offset)/800*100)
+                    myergopwm.output(dutycycle)
                     # this sleep is 0.01 second looptime for PWM
                     time.sleep(cycle/100)
             else:
@@ -107,8 +158,11 @@ def module_run():
                 print("watt ------------ stop GPIO output")
                 while rpm < rpm_limit:
                     # keep inside while for pausing the sequence of yaml
-                    print("watt ------------ 0 Watt will be applied , Training paused")
+                    print("watt ------------ 0 Watt will be applied ,"
+                          " Training paused")
                     time.sleep(cycle)
+
+    # close training csv file
 
     # destroy for the automatic loading after finishing the watt program
     myergopwm.destroy()

@@ -1,12 +1,13 @@
 # ergoFACE
 Hardware interface for DAUM Ergobike 8008 TRS
+change for ATOM
 
 <img src=https://github.com/weinzmi/ergoFACE/blob/master/images/wiki/EF_first_sketsh.jpg width="300">
 
 first idea 22.12.2018; Michael Weinzinger
 
 ## Overview
-* A hardware + software interface ("ergoFACE") is going to be developed, 
+* A hardware + software interface ("ergoFACE") is going to be developed,
 which allows a mobile device (smartphone, tablet) to interact with a DAUM Ergobike 8008 TRS ("DAUM").
 
 * The innitial idea is to be able to replace the standard cockpit of the DAUM with this solution (ergoFACE + mobile device).

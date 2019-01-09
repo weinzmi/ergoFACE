@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 ########################################################################
-# Filename    : Alertor.py
-# Description : Alarm by button.
-# Author      : freenove
-# modification: 2018/08/02
-########################################################################
+# sound.copyis used to create and output status specific sounds
+#####################################################################
+
 import RPi.GPIO as GPIO
 import time
-import math
 
 buzzerPin = 11  # define the buzzerPin
 
@@ -19,7 +16,7 @@ def setup():
     GPIO.setup(buzzerPin, GPIO.OUT)  # Set buzzerPin's mode is output
 
     p = GPIO.PWM(buzzerPin, 1)
-    p.start(0);
+    p.start(0)
 
 
 def loop():
@@ -82,6 +79,7 @@ def alertor():
     time.sleep(0.125)
     p.ChangeFrequency(2093)  # output PWM
 
+
 def stopAlertor():
     p.stop()
 
@@ -95,6 +93,7 @@ if __name__ == '__main__':  # Program start from here
     setup()
     try:
         loop()
-    except KeyboardInterrupt:  # When 'Ctrl+C' is pressed, the child program destroy() will be  executed.
+    except KeyboardInterrupt:
+        # When 'Ctrl+C' is pressed, the child program destroy()
+        # will be  executed.
         destroy()
-
