@@ -4,14 +4,18 @@ import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
-# import array
+import array
 try:
     from gi.repository import GObject
 except ImportError:
     import gobject as GObject
-# import sys
+import sys
 
-# from random import randint
+from random import randint
+
+from multiprocessing.dummy import Pool as ThreadPool
+
+import DAUM
 
 mainloop = None
 
@@ -54,8 +58,8 @@ class Application(dbus.service.Object):
         self.path = '/'
         self.services = []
         dbus.service.Object.__init__(self, bus, self.path)
-        self.add_service(FitnessMachineService(bus, 0))
-        self.add_service(HeartRateService(bus, 1))
+        self.add_service(CSCService(bus, 1))
+        self.add_service(CyclingPowerService(bus, 2))
 
     def get_path(self):
         return dbus.ObjectPath(self.path)
@@ -254,207 +258,66 @@ class Descriptor(dbus.service.Object):
         print('Default WriteValue called, returning error')
         raise NotSupportedException()
 
-##############################################################################
 
-
-class FitnessMachineService(Service):
-    """
-    Abstract:
-    This service exposes training-related data in the sports and fitness
-    environment, which allows a Server (e.g., a fitness machine) to send
-    training-related data to a Client.
-
-    Summary:
-    The Fitness Machine Service (FTMS) exposes training-related data in
-    the sports and fitness environment, which allows a Client to collect
-    training data while a user is exercising with a fitness machine (Server).
-
-    Service Dependencies:
-    This service has no dependencies on other GATT-based services.
-    """
-    FTMS_UUID = '1826'
+class CSCService(Service):
+    TEST_SVC_UUID = '1816'
 
     def __init__(self, bus, index):
-        Service.__init__(self, bus, index, self.FTMS_UUID, True)
-        self.add_characteristic(Fitness_Machine_Feature(bus, 0, self))
-        # self.add_characteristic(Indoor_Bike_Data(bus, 1, self))
-        # self.add_characteristic(Training_Status(bus, 2, self))
-        # self.add_characteristic(Supported_Speed_Range(bus, 3, self))
-        # self.add_characteristic(Supported_Inclination_Range(bus, 4, self))
-        # self.add_characteristic(Supported_Resistance_Level_Range(bus, 5, self))
-        # self.add_characteristic(Supported_Power_Range(bus, 6, self))
-        # self.add_characteristic(Supported_Heart_Rate_Range(bus, 7, self))
-        # self.add_characteristic(Fitness_Machine_Control_Point(bus, 8, self))
-        # self.add_characteristic(Fitness_Machine_Status(bus, 9, self))
-        self.energy_expended = 0
+        Service.__init__(self, bus, index, self.TEST_SVC_UUID, True)
+        self.add_characteristic(CSCMeasurement(bus, 0, self))
+        self.add_characteristic(CSCFeatureCharacteristic(bus, 1, self))
 
 
-class Fitness_Machine_Feature(Characteristic):
-    """
-    The Fitness Machine Feature characteristic is defined
-    in the Fitness Machine Service Specification
-    """
-    FITNESS_MACHINE_FEATURE_UUID = '2ACC'
+class CSCMeasurement(Characteristic):
+    CYCLING_POWER_MEASUREMENT_UUID = '2a5b'
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
                 self, bus, index,
-                self.FITNESS_MACHINE_FEATURE_UUID,
-                ['read'],
-                service)
-
-    def ReadValue(self, options):
-        # Return 'Chest' as the sensor location.
-        return [0x01]
-
-
-class Indoor_Bike_Data(Characteristic):
-    """
-    The Indoor Bike Data characteristic is used to send training-related
-    data to the Client from an indoor bike (Server).
-    """
-    INDOOR_BIKE_DATA_UUID = '2AD2'
-
-
-class Training_Status(Characteristic):
-    """
-    The Training Status characteristic is defined in the Fitness Machine
-    Service Specification.
-    """
-    TRAINING_STATUS_UUID = '2AD3'
-
-
-class Supported_Speed_Range(Characteristic):
-    """
-    The Supported Speed Range characteristic is used to send the supported
-    speed range as well as the minimum speed increment supported by the Server.
-    """
-    SUPPORTED_SPEED_RANGE_UUID = '2AD4'
-
-
-class Supported_Inclination_Range(Characteristic):
-    """
-    The Supported Inclination Range characteristic is used to send
-    the supported inclination range as well as the minimum inclination
-    increment supported by the Server.
-    """
-    SUPPORTED_INCLINATION_RANGE_UUID = '2AD5'
-
-
-class Supported_Resistance_Level_Range(Characteristic):
-    """
-    The Supported Resistance Level Range characteristic is used to send
-    the supported resistance level range as well as the minimum resistance
-    increment supported by the Server.
-    """
-    SUPPORTED_RESISTANCE_LEVEL_RANGE_UUID = '2AD6'
-
-
-class Supported_Power_Range(Characteristic):
-    """
-    The Supported Power Range characteristic is used to send the supported
-    power range as well as the minimum power increment supported by the Server.
-    """
-    SUPPORTED_POWER_RANGE_UUID = '2AD8'
-
-
-class Supported_Heart_Rate_Range(Characteristic):
-    """
-    The Supported Heart Rate Range characteristic is used to send the
-    supported Heart Rate range as well as the minimum Heart Rate increment
-    supported by the Server.
-    """
-    SUPPORTED_HEART_RATE_RANGE_UUID = '2AD7'
-
-
-class Fitness_Machine_Control_Point(Characteristic):
-    """
-    The Fitness Machine Control Point characteristic is defined in the
-    Fitness Machine Service Specification.
-    """
-    FITNESS_MACHINE_CONTROL_POINT_UUID = '2AD9'
-
-
-class Fitness_Machine_Status(Characteristic):
-    """
-    The Fitness Machine Status characteristic is defined in the
-    Fitness Machine Service Specification.
-    """
-    FITNESS_MACHINE_STATUS_UUID = '2ADA'
-
-
-##############################################################################
-
-class HeartRateService(Service):
-    """
-    Fake Heart Rate Service that simulates a fake heart beat and control point
-    behavior.
-
-    """
-    HR_UUID = '180d'
-
-    def __init__(self, bus, index):
-        Service.__init__(self, bus, index, self.HR_UUID, True)
-        self.add_characteristic(HeartRateMeasurementChrc(bus, 0, self))
-        self.add_characteristic(BodySensorLocationChrc(bus, 1, self))
-        self.add_characteristic(HeartRateControlPointChrc(bus, 2, self))
-        self.energy_expended = 0
-
-
-class HeartRateMeasurementChrc(Characteristic):
-    HR_MSRMT_UUID = '2a37'
-
-    def __init__(self, bus, index, service):
-        Characteristic.__init__(
-                self, bus, index,
-                self.HR_MSRMT_UUID,
-                ['notify'],
+                self.CYCLING_POWER_MEASUREMENT_UUID,
+                ['notify', 'broadcast'],
                 service)
         self.notifying = False
-        self.hr_ee_count = 0
 
-    def hr_msrmt_cb(self):
-        '''
-        in APP i can see Value 0x0664
-        06 (hex) = 6 (dec) from above
-        64 (hex) = 100 (dec) from below
+    def csc_msrmt_cb(self):
+        # Flags bit 0,1 set to enable wheel and crank revolution data
+        value = [dbus.Byte(0 | (1 << 0) | (1 << 1)),  # 8-bit Flags
+                 dbus.Byte(0), dbus.Byte(0), dbus.Byte(0), dbus.Byte(0),  # Cumulative wheel revs
+                 dbus.Byte(0), dbus.Byte(0),  # Last rev Time
+                 dbus.Byte(0), dbus.Byte(0),  # Cumulative Crank
+                 dbus.Byte(0), dbus.Byte(0)   # Last Crank Time
+                 ]
 
-        if I comment out value.append(dbus.Byte(0x06)),
-        app that listens on HBM crashes
+        s4.DoIt()
 
-        0x0664 == 0000 0110 0110 0100
-                FLAGS 8Bit | Heart Rate Measurement Value (uint8)
-        Bit Field
-        0000 0110 is empty
+        # Build revolution data - little endian
+        value[4] = (s4.wheel_revolutions & 0xFF000000) >> 24
+        value[3] = (s4.wheel_revolutions & 0xFF0000) >> 16
+        value[2] = (s4.wheel_revolutions & 0xFF00) >> 8
+        value[1] = (s4.wheel_revolutions & 0xFF)
 
-            Bit 0 = Heart Rate Value Format / Size 1 Bit = "0" = "UINT8"
-            Bit 1 = Sensor Contact Status bits / Size 2 Bits = 00 = "0" = Sensor Contact feature is not supported in the current connection
-            Bit 2 = extension of Bit 1
-            Bit 3 = Energy Expended Status bit / Size 1 Bit = "0" = Energy Expended field is not present
+        time_in_1024_sec = int(s4.rev_time * 1024) & 0xFFFF
+        value[6] = (time_in_1024_sec & 0xFF00) >> 8
+        value[5] = (time_in_1024_sec & 0xFF)
 
-            Bit 4 = RR-Interval bit / Size 1 Bit = "0" = "RR-Interval values are not present."
-            Bit 5 = 	Reserved for future use / Size 3 Bit = "6" = EMPTY
-            Bit 6 = extension of Bit 5
-            Bit 7 = extension of Bit 5
+        # Build crank (stroke) data - little endian
+        value[8] = (s4.stroke_count & 0xFF00) >> 8
+        value[7] = (s4.stroke_count & 0xFF)
 
-        '''
-        value = []
-        value.append(dbus.Byte(0x00))  # FLAGS 8Bit
-        value.append(dbus.Byte(100))  # Heart Rate Measurement Value (uint8)
-
-        print('Updating value: ' + repr(value))
+        time_in_1024_sec = int(s4.last_stroke_time * 1024) & 0xFFFF
+        value[10] = (time_in_1024_sec & 0xFF00) >> 8
+        value[9] = (time_in_1024_sec & 0xFF)
 
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
-
         return self.notifying
 
-    def _update_hr_msrmt_simulation(self):
-        print('Update HR Measurement Simulation')
+    def _update_csc_msrmt_simulation(self):
+        print('Update CSC Measurement Simulation')
 
         if not self.notifying:
             return
 
-        GObject.timeout_add(1000, self.hr_msrmt_cb)
+        GObject.timeout_add(1000, self.csc_msrmt_cb)
 
     def StartNotify(self):
         if self.notifying:
@@ -462,7 +325,7 @@ class HeartRateMeasurementChrc(Characteristic):
             return
 
         self.notifying = True
-        self._update_hr_msrmt_simulation()
+        self._update_csc_msrmt_simulation()
 
     def StopNotify(self):
         if not self.notifying:
@@ -470,51 +333,150 @@ class HeartRateMeasurementChrc(Characteristic):
             return
 
         self.notifying = False
-        self._update_hr_msrmt_simulation()
+        self._update_csc_msrmt_simulation()
 
 
-class BodySensorLocationChrc(Characteristic):
-    BODY_SNSR_LOC_UUID = '2a38'
+class CSCFeatureCharacteristic(Characteristic):
+
+    CYCLING_POWER_FEATURE_UUID = '2a5c'
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
                 self, bus, index,
-                self.BODY_SNSR_LOC_UUID,
+                self.CYCLING_POWER_FEATURE_UUID,
                 ['read'],
                 service)
+        # Bits 0,1 enable wheel and crank data
+        # Value 0x0300
+        self.value = [dbus.Byte(0 | (1 << 0) | (1 << 1)), dbus.Byte(0)]
 
     def ReadValue(self, options):
-        # Return 'Chest' as the sensor location.
-        return [0x01]
+        print('CSCFeatureCharacteristic Read: ' + repr(self.value))
+        return self.value
 
 
-class HeartRateControlPointChrc(Characteristic):
-    HR_CTRL_PT_UUID = '2a39'
+class CyclingPowerService(Service):
+    TEST_SVC_UUID = '1818'
+
+    def __init__(self, bus, index):
+        Service.__init__(self, bus, index, self.TEST_SVC_UUID, True)
+        self.add_characteristic(CyclingPowerMeasurement(bus, 0, self))
+        self.add_characteristic(CyclingPowerFeatureCharacteristic(bus, 1, self))
+        self.add_characteristic(SensorLocation(bus, 2, self))
+
+
+class CyclingPowerMeasurement(Characteristic):
+    CYCLING_POWER_MEASUREMENT_UUID = '2a63'
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
                 self, bus, index,
-                self.HR_CTRL_PT_UUID,
-                ['write'],
+                self.CYCLING_POWER_MEASUREMENT_UUID,
+                ['notify', 'broadcast'],
                 service)
+        self.notifying = False
 
-    def WriteValue(self, value, options):
-        print('Heart Rate Control Point WriteValue called')
+    def cp_msrmt_cb(self):
+        # Flags bit 4,5 set to enable wheel and crank revolution data
+        value = [dbus.Byte(0 | (1 << 4) | (1 << 5)), dbus.Byte(0),  # 16bit Flags
+                 dbus.Byte(0), dbus.Byte(0),  # Instantaneous power
+                 dbus.Byte(0), dbus.Byte(0), dbus.Byte(0), dbus.Byte(0),  # Cumulative wheel revs
+                 dbus.Byte(0), dbus.Byte(0),  # Last rev Time
+                 dbus.Byte(0), dbus.Byte(0),  # Cumulative Crank
+                 dbus.Byte(0), dbus.Byte(0)   # Last Crank Time
+                 ]
 
-        if len(value) != 1:
-            raise InvalidValueLengthException()
+        # Flags is 16bits
+        # power in watts - 16 bits
 
-        byte = value[0]
-        print('Control Point value: ' + repr(byte))
+        s4.DoIt()
 
-        if byte != 1:
-            raise FailedException("0x80")
+        # Build kcal data - little endian
+        value[3] = (s4.power & 0xFF00) >> 8
+        value[2] = (s4.power & 0xFF)
 
-        print('Energy Expended field reset!')
-        self.service.energy_expended = 0
+        # Build revolution data - little endian
+        value[7] = (s4.wheel_revolutions & 0xFF000000) >> 24
+        value[6] = (s4.wheel_revolutions & 0xFF0000) >> 16
+        value[5] = (s4.wheel_revolutions & 0xFF00) >> 8
+        value[4] = (s4.wheel_revolutions & 0xFF)
+
+        time_in_2048_sec = int(s4.rev_time * 2048) & 0xFFFF
+        value[9] = (time_in_2048_sec & 0xFF00) >> 8
+        value[8] = (time_in_2048_sec & 0xFF)
+
+        # Build crank (stroke) data - little endian
+        value[11] = (s4.stroke_count & 0xFF00) >> 8
+        value[10] = (s4.stroke_count & 0xFF)
+
+        time_in_1024_sec = int(s4.last_stroke_time * 1024) & 0xFFFF
+        value[13] = (time_in_1024_sec & 0xFF00) >> 8
+        value[12] = (time_in_1024_sec & 0xFF)
+
+        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        return self.notifying
+
+    def _update_cp_msrmt_simulation(self):
+        print('Update Power Measurement Simulation')
+
+        if not self.notifying:
+            return
+
+        GObject.timeout_add(1000, self.cp_msrmt_cb)
+
+    def StartNotify(self):
+        if self.notifying:
+            print('Already notifying, nothing to do')
+            return
+
+        self.notifying = True
+        self._update_cp_msrmt_simulation()
+
+    def StopNotify(self):
+        if not self.notifying:
+            print('Not notifying, nothing to do')
+            return
+
+        self.notifying = False
+        self._update_cp_msrmt_simulation()
 
 
-#############################################################################
+class CyclingPowerFeatureCharacteristic(Characteristic):
+
+    CYCLING_POWER_FEATURE_UUID = '2a65'
+
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(
+                self, bus, index,
+                self.CYCLING_POWER_FEATURE_UUID,
+                ['read'],
+                service)
+        self.value = [dbus.Byte(0), dbus.Byte(0)]
+
+    def ReadValue(self, options):
+        print('CyclingPowerFeatureCharacteristic Read: ' + repr(self.value))
+        return self.value
+
+
+class SensorLocation(Characteristic):
+
+    CYCLING_SENSOR_LOCATION_UUID = '2a5d'
+
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(
+                self, bus, index,
+                self.CYCLING_SENSOR_LOCATION_UUID,
+                ['read'],
+                service)
+        self.value = [dbus.Byte(0)]
+        # 13 == Rear Hub
+        self.value[0] = 13
+
+    def ReadValue(self, options):
+        print('SensorLocation Read: ' + repr(self.value))
+        return self.value
+
+
 def register_app_cb():
     print('GATT application registered')
 
@@ -534,6 +496,9 @@ def find_adapter(bus):
             return o
 
     return None
+
+
+s4 = DAUM.S4Interface()
 
 
 def main():
