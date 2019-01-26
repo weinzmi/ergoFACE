@@ -1,17 +1,20 @@
 #!/usr/bin/python3
 
+from __future__ import print_function
+
 import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
 
-# import array
-try:
-    from gi.repository import GObject
-except ImportError:
-    import gobject as GObject
+import array
 
-# from random import randint
+try:
+  from gi.repository import GObject  # python3
+except ImportError:
+  import gobject as GObject  # python2
+
+from random import randint
 
 mainloop = None
 
@@ -44,7 +47,7 @@ class FailedException(dbus.exceptions.DBusException):
 
 
 class Advertisement(dbus.service.Object):
-    PATH_BASE = '/org/bluez/example/advertisement'
+    PATH_BASE = '/org/ergoFACE'
 
     def __init__(self, bus, index, advertising_type):
         self.path = self.PATH_BASE + str(index)
@@ -54,7 +57,9 @@ class Advertisement(dbus.service.Object):
         self.manufacturer_data = None
         self.solicit_uuids = None
         self.service_data = None
+        self.local_name = None
         self.include_tx_power = None
+        self.data = None
         dbus.service.Object.__init__(self, bus, self.path)
 
     def get_properties(self):
@@ -72,8 +77,14 @@ class Advertisement(dbus.service.Object):
         if self.service_data is not None:
             properties['ServiceData'] = dbus.Dictionary(self.service_data,
                                                         signature='sv')
+        if self.local_name is not None:
+            properties['LocalName'] = dbus.String(self.local_name)
         if self.include_tx_power is not None:
             properties['IncludeTxPower'] = dbus.Boolean(self.include_tx_power)
+
+        if self.data is not None:
+            properties['Data'] = dbus.Dictionary(
+                self.data, signature='yv')
         return {LE_ADVERTISEMENT_IFACE: properties}
 
     def get_path(self):
@@ -99,14 +110,24 @@ class Advertisement(dbus.service.Object):
             self.service_data = dbus.Dictionary({}, signature='sv')
         self.service_data[uuid] = dbus.Array(data, signature='y')
 
+    def add_local_name(self, name):
+        if not self.local_name:
+            self.local_name = ""
+        self.local_name = dbus.String(name)
+
+    def add_data(self, ad_type, data):
+        if not self.data:
+            self.data = dbus.Dictionary({}, signature='yv')
+        self.data[ad_type] = dbus.Array(data, signature='y')
+
     @dbus.service.method(DBUS_PROP_IFACE,
                          in_signature='s',
                          out_signature='a{sv}')
     def GetAll(self, interface):
-        print("Get All")
+        print('GetAll')
         if interface != LE_ADVERTISEMENT_IFACE:
             raise InvalidArgsException()
-        print("returning props")
+        print('returning props')
         return self.get_properties()[LE_ADVERTISEMENT_IFACE]
 
     @dbus.service.method(LE_ADVERTISEMENT_IFACE,
@@ -115,16 +136,17 @@ class Advertisement(dbus.service.Object):
     def Release(self):
         print('%s: Released!' % self.path)
 
-
 class TestAdvertisement(Advertisement):
 
     def __init__(self, bus, index):
         Advertisement.__init__(self, bus, index, 'peripheral')
-        self.add_service_uuid('1816')  # Cycling Speed and Cadence
-        self.add_service_uuid('1818')  # Cycling Power
-        # self.add_manufacturer_data(0xffff, [0x00, 0x01, 0x02, 0x03, 0x04])
-        # self.add_service_data('9999', [0x00, 0x01, 0x02, 0x03, 0x04])
+        self.add_service_uuid('1816')
+        self.add_service_uuid('1818')
+        self.add_manufacturer_data(0xffff, [0x00, 0x01, 0x02, 0x03, 0x04])
+        self.add_service_data('9999', [0x00, 0x01, 0x02, 0x03, 0x04])
+        self.add_local_name('ergoFACE')
         self.include_tx_power = True
+        self.add_data(0x26, [0x01, 0x01, 0x00])
 
 
 def register_ad_cb():
@@ -161,7 +183,7 @@ def main():
         return
 
     adapter_props = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
-                                   "org.freedesktop.DBus.Properties")
+                                   "org.freedesktop.DBus.Properties");
 
     adapter_props.Set("org.bluez.Adapter1", "Powered", dbus.Boolean(1))
 
@@ -177,7 +199,6 @@ def main():
                                      error_handler=register_ad_error_cb)
 
     mainloop.run()
-
 
 if __name__ == '__main__':
     main()

@@ -258,6 +258,10 @@ class Descriptor(dbus.service.Object):
         print('Default WriteValue called, returning error')
         raise NotSupportedException()
 
+###########################################################################
+# Start GATT Services
+###########################################################################
+
 
 class CSCService(Service):
     TEST_SVC_UUID = '1816'
@@ -289,6 +293,7 @@ class CSCMeasurement(Characteristic):
                  ]
 
         s4.DoIt()
+        print(s4.wheel_revolutions)
 
         # Build revolution data - little endian
         value[4] = (s4.wheel_revolutions & 0xFF000000) >> 24

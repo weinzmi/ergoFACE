@@ -49,7 +49,6 @@ class S4Interface(object):
         # use the current value as a base
         self.last_stroke_time = time.time()
 
-
     def StartSerial(self):
         print("S4 INTERFACE  ---  Start Serial")
 
