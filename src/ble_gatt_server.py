@@ -15,7 +15,7 @@ from random import randint
 
 from multiprocessing.dummy import Pool as ThreadPool
 
-import DAUM
+import ble_conf
 
 mainloop = None
 
@@ -292,24 +292,23 @@ class CSCMeasurement(Characteristic):
                  dbus.Byte(0), dbus.Byte(0)   # Last Crank Time
                  ]
 
-        s4.DoIt()
-        print(s4.wheel_revolutions)
+        ble.Transmit_csc()
 
         # Build revolution data - little endian
-        value[4] = (s4.wheel_revolutions & 0xFF000000) >> 24
-        value[3] = (s4.wheel_revolutions & 0xFF0000) >> 16
-        value[2] = (s4.wheel_revolutions & 0xFF00) >> 8
-        value[1] = (s4.wheel_revolutions & 0xFF)
+        value[4] = (ble.wheel_revolutions & 0xFF000000) >> 24
+        value[3] = (ble.wheel_revolutions & 0xFF0000) >> 16
+        value[2] = (ble.wheel_revolutions & 0xFF00) >> 8
+        value[1] = (ble.wheel_revolutions & 0xFF)
 
-        time_in_1024_sec = int(s4.rev_time * 1024) & 0xFFFF
+        time_in_1024_sec = int(ble.rev_time * 1024) & 0xFFFF
         value[6] = (time_in_1024_sec & 0xFF00) >> 8
         value[5] = (time_in_1024_sec & 0xFF)
 
         # Build crank (stroke) data - little endian
-        value[8] = (s4.stroke_count & 0xFF00) >> 8
-        value[7] = (s4.stroke_count & 0xFF)
+        value[8] = (ble.stroke_count & 0xFF00) >> 8
+        value[7] = (ble.stroke_count & 0xFF)
 
-        time_in_1024_sec = int(s4.last_stroke_time * 1024) & 0xFFFF
+        time_in_1024_sec = int(ble.last_stroke_time * 1024) & 0xFFFF
         value[10] = (time_in_1024_sec & 0xFF00) >> 8
         value[9] = (time_in_1024_sec & 0xFF)
 
@@ -394,27 +393,27 @@ class CyclingPowerMeasurement(Characteristic):
         # Flags is 16bits
         # power in watts - 16 bits
 
-        s4.DoIt()
+        ble.Transmit_cp()
 
         # Build kcal data - little endian
-        value[3] = (s4.power & 0xFF00) >> 8
-        value[2] = (s4.power & 0xFF)
+        value[3] = (ble.power & 0xFF00) >> 8
+        value[2] = (ble.power & 0xFF)
 
         # Build revolution data - little endian
-        value[7] = (s4.wheel_revolutions & 0xFF000000) >> 24
-        value[6] = (s4.wheel_revolutions & 0xFF0000) >> 16
-        value[5] = (s4.wheel_revolutions & 0xFF00) >> 8
-        value[4] = (s4.wheel_revolutions & 0xFF)
+        value[7] = (ble.wheel_revolutions1 & 0xFF000000) >> 24
+        value[6] = (ble.wheel_revolutions1 & 0xFF0000) >> 16
+        value[5] = (ble.wheel_revolutions1 & 0xFF00) >> 8
+        value[4] = (ble.wheel_revolutions1 & 0xFF)
 
-        time_in_2048_sec = int(s4.rev_time * 2048) & 0xFFFF
+        time_in_2048_sec = int(ble.rev_time * 2048) & 0xFFFF
         value[9] = (time_in_2048_sec & 0xFF00) >> 8
         value[8] = (time_in_2048_sec & 0xFF)
 
         # Build crank (stroke) data - little endian
-        value[11] = (s4.stroke_count & 0xFF00) >> 8
-        value[10] = (s4.stroke_count & 0xFF)
+        value[11] = (ble.stroke_count1 & 0xFF00) >> 8
+        value[10] = (ble.stroke_count1 & 0xFF)
 
-        time_in_1024_sec = int(s4.last_stroke_time * 1024) & 0xFFFF
+        time_in_1024_sec = int(ble.last_stroke_time * 1024) & 0xFFFF
         value[13] = (time_in_1024_sec & 0xFF00) >> 8
         value[12] = (time_in_1024_sec & 0xFF)
 
@@ -503,7 +502,7 @@ def find_adapter(bus):
     return None
 
 
-s4 = DAUM.S4Interface()
+ble = ble_conf.bleValue()
 
 
 def main():
