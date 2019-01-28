@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import serial
 import time
@@ -124,19 +125,8 @@ def get_RunData():
 def get_cockadr():
 
     global ergobike_adr
-    # make sure that the correct command is send to ergobike
-    # 001 #
-    # cmd = struct.pack('B', 17)  # 0x11(HEX) / 17(INT) is ergobike command for ergobike adress
-    # write(data) Write the bytes data to the port.
-    # This should be of type bytes (or compatible such as bytearray or memoryview).
-    # 002 #
-    # cmd = b'\x11'
-    # 003 #
-    # cmd = B'\x11'
-    # https://stackoverflow.com/a/45388986
-    # 004 - tested in jupyter; worked#
-    cmd = 0x11
 
+    cmd = 0x11
     tx_BuffChar[0] = cmd  # assigne request adress of ergobike in tx buffer
 
     clear_RX_Buff()  # clear remining data in RX Buffer
@@ -161,16 +151,8 @@ def get_cockadr():
 
 def send_TX_Buff(tx_BuffLen):
     for i in range(tx_BuffLen):
-        # try this or below
-
-        ser.write((tx_BuffChar[i].to_bytes(1, byteorder='little', signed=False)))
-
-        # this can work in 2 ways
-        # decode HEX
-        # line break at the end
-
-        # ser.write(tx_BuffChar[i].decode('hex') + '\r\n')
-    # https://stackoverflow.com/questions/44639741/pyserial-only-reading-one-byte
+        ser.write((tx_BuffChar[i].to_bytes(1, byteorder='little',
+                                           signed=False)))
 
 ###############################################################
 # reading SerialD values from ErgoBike-Classic 8008TRS
@@ -193,7 +175,6 @@ def read_RX_Buff(rx_BuffLen):
 
         if valid:
             rx_BuffChar[i] = int.from_bytes(ser.read(), byteorder='little')
-            # rx_BuffChar[i] = int(ser.read(), 16)  # byte received, add it to buffer
 
     return valid
 
@@ -238,28 +219,8 @@ if __name__ == "__main__":
     # Constants
     circumference = 2000  # preset circumference(Radumfang) in mm
     valid = True
-    # have to be tested, which byt array supports "unsigned char"
-    # 001 #
-    # rx_BuffChar = array('B', 50) # UART input buffer
-    # tx_BuffChar = array('B', 10)# UART output bufer
-    # 002 # OK but b'e' in first byte
-    # rx_BuffChar = bytearray(50)
-    # tx_BuffChar = bytearray(10)
-    # 003 #
-    # rx_BuffChar = (50)
-    # tx_BuffChar = (10)
-    # 004 #
-    # rx_BuffChar = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    #                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    #                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    #                0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-    # tx_BuffChar = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    #                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    #                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    #                0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-    # 005 #
-    rx_BuffChar = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    tx_BuffChar = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    rx_BuffChar = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    tx_BuffChar = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     # Variables
     ergobike_adr = 0x00  # ergobike adress; commented to avoid wrong initiation
