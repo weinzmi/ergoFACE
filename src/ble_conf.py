@@ -4,24 +4,19 @@ import time
 from random import randint
 
 
-"""
-Simple parser for interfacing with the Waterrower S4 computer over a tty
-on a Raspberry Pi.   This most-likely will work on other host computers
-with some simple modification.
-Information for the S4 proocol came from:
-    Water Rower S4 & S5 USB Protocol
-    Issue 1.04 - Aug 2009
-"""
-
-
-class bleState:
-    CONNECTING = 1
-    IDLE = 2
-
-
 class bleValue(object):
     def __init__(self):
         self.Reset()
+
+    def ftm_ib(self):
+        print("BLE VALUE  ---  FTM Indoor Bike Data")
+        self.speed = 30
+        self.cadence = 90
+        self.power = 250
+
+    def ftm_status(self):
+        print("BLE VALUE  ---  FTM Status")
+        self.status = 0x04  # Fitness Machine Started or Resumed by the User
 
     def Transmit_csc(self):
         print("BLE VALUE  ---  CSC values")
@@ -57,8 +52,3 @@ class bleValue(object):
         self.last_stroke_time = time.time()
         self.wheel_revolutions1 = 0
         self.stroke_count1 = 0
-
-# Example of running this as a standalone test
-
-# s4 = S4Interface()
-# s4.Transmit()

@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 from __future__ import print_function
 
 import dbus
@@ -7,14 +6,10 @@ import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
 
-import array
-
 try:
-  from gi.repository import GObject  # python3
+    from gi.repository import GObject  # python3
 except ImportError:
-  import gobject as GObject  # python2
-
-from random import randint
+    import gobject as GObject  # python2
 
 mainloop = None
 
@@ -136,12 +131,14 @@ class Advertisement(dbus.service.Object):
     def Release(self):
         print('%s: Released!' % self.path)
 
+
 class TestAdvertisement(Advertisement):
 
     def __init__(self, bus, index):
         Advertisement.__init__(self, bus, index, 'peripheral')
         self.add_service_uuid('1816')
         self.add_service_uuid('1818')
+        self.add_service_uuid('1826')
         self.add_manufacturer_data(0xffff, [0x00, 0x01, 0x02, 0x03, 0x04])
         self.add_service_data('9999', [0x00, 0x01, 0x02, 0x03, 0x04])
         self.add_local_name('ergoFACE')
@@ -183,7 +180,7 @@ def main():
         return
 
     adapter_props = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
-                                   "org.freedesktop.DBus.Properties");
+                                   "org.freedesktop.DBus.Properties")
 
     adapter_props.Set("org.bluez.Adapter1", "Powered", dbus.Boolean(1))
 
@@ -199,6 +196,7 @@ def main():
                                      error_handler=register_ad_error_cb)
 
     mainloop.run()
+
 
 if __name__ == '__main__':
     main()

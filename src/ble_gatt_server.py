@@ -4,18 +4,12 @@ import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
-import array
+import ble_conf
+
 try:
     from gi.repository import GObject
 except ImportError:
     import gobject as GObject
-import sys
-
-from random import randint
-
-from multiprocessing.dummy import Pool as ThreadPool
-
-import ble_conf
 
 mainloop = None
 
@@ -60,6 +54,7 @@ class Application(dbus.service.Object):
         dbus.service.Object.__init__(self, bus, self.path)
         self.add_service(CSCService(bus, 1))
         self.add_service(CyclingPowerService(bus, 2))
+        self.add_service(FitnessMachineService(bus, 3))
 
     def get_path(self):
         return dbus.ObjectPath(self.path)
@@ -261,6 +256,198 @@ class Descriptor(dbus.service.Object):
 ###########################################################################
 # Start GATT Services
 ###########################################################################
+
+
+class FitnessMachineService(Service):
+    """
+    Abstract:
+    This service exposes training-related data in the sports and fitness
+    environment, which allows a Server (e.g., a fitness machine) to send
+    training-related data to a Client.
+
+    Summary:
+    The Fitness Machine Service (FTMS) exposes training-related data in
+    the sports and fitness environment, which allows a Client to collect
+    training data while a user is exercising with a fitness machine (Server).
+
+    Service Dependencies:
+    This service has no dependencies on other GATT-based services.
+    """
+    FTMS_UUID = '1826'
+
+    def __init__(self, bus, index):
+        Service.__init__(self, bus, index, self.FTMS_UUID, True)
+        self.add_characteristic(Fitness_Machine_Feature(bus, 0, self))
+        self.add_characteristic(Indoor_Bike_Data(bus, 1, self))
+        self.add_characteristic(Fitness_Machine_Control_Point(bus, 2, self))
+        self.add_characteristic(Fitness_Machine_Status(bus, 3, self))
+
+
+class Fitness_Machine_Feature(Characteristic):
+    """
+    The Fitness Machine Feature characteristic is defined
+    in the Fitness Machine Service Specification
+    """
+    FITNESS_MACHINE_FEATURE_UUID = '2ACC'
+
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(
+                self, bus, index,
+                self.FITNESS_MACHINE_FEATURE_UUID,
+                ['read'],
+                service)
+        self.value = [dbus.Byte(0 | (1 << 1)),  # Cadence supported
+                      dbus.Byte(0),
+                      dbus.Byte(0),
+                      dbus.Byte(0)]
+
+    def ReadValue(self, options):
+        print('Fitness Machine Feature Read: ' + repr(self.value))
+        return self.value
+
+
+class Indoor_Bike_Data(Characteristic):
+    """
+    The Indoor Bike Data characteristic is used to send training-related
+    data to the Client from an indoor bike (Server).
+    """
+    INDOOR_BIKE_DATA_UUID = '2AD2'
+
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(
+                self, bus, index,
+                self.INDOOR_BIKE_DATA_UUID,
+                ['notify'],  # no broadcast
+                service)
+        self.notifying = False
+
+    def ib_data_cb(self):
+        # Flags bit 0,2,6 set to enable speed, cadence and power data
+        value = [dbus.Byte(0 | (1 << 0) | (1 << 2) | (1 << 6)), dbus.Byte(0),  # 16-bit Flags
+                 dbus.Byte(0), dbus.Byte(0),  # Instantaneous Speed
+                 dbus.Byte(0), dbus.Byte(0),  # Instantaneous Cadence
+                 dbus.Byte(0), dbus.Byte(0),  # Instantaneous Power
+                 ]
+        ble.ftm_ib()
+
+        # Build Instantaneous Speed data - little endian
+        value[3] = (ble.speed & 0xFF00) >> 8
+        value[2] = (ble.speed & 0xFF)
+
+        # Build Instantaneous Cadence data - little endian
+        value[5] = (ble.cadence & 0xFF00) >> 8
+        value[4] = (ble.cadence & 0xFF)
+
+        # Build Instantaneous Power data - little endian
+        value[7] = (ble.power & 0xFF00) >> 8
+        value[6] = (ble.power & 0xFF)
+
+        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        return self.notifying
+
+    def _update_ib_data_simulation(self):
+        print('Update FTM Indoor Bike Data')
+
+        if not self.notifying:
+            return
+
+        GObject.timeout_add(1000, self.ib_data_cb)
+
+    def StartNotify(self):
+        if self.notifying:
+            print('Already notifying, nothing to do')
+            return
+
+        self.notifying = True
+        self._update_ib_data_simulation()
+
+    def StopNotify(self):
+        if not self.notifying:
+            print('Not notifying, nothing to do')
+            return
+
+        self.notifying = False
+        self._update_ib_data_simulation()
+
+
+class Fitness_Machine_Control_Point(Characteristic):
+    """
+    The Fitness Machine Control Point characteristic is defined in the
+    Fitness Machine Service Specification.
+    """
+    FITNESS_MACHINE_CONTROL_POINT_UUID = '2AD9'
+
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(
+                self, bus, index,
+                self.FITNESS_MACHINE_CONTROL_POINT_UUID,
+                ['write', 'indicate'],
+                service)
+
+    def WriteValue(self, value, options):
+        print('Fitness Machine Control Point WriteValue called')
+
+        if len(value) != 1:
+            raise InvalidValueLengthException()
+
+        self.ftm_cpv = value[0]  # Fitness Machine Control Point Value
+        print('FTM Control Point value: ' + repr(self.ftm_cpv))
+
+        if self.ftm_cpv != 1:
+            raise FailedException("0x80")
+
+
+class Fitness_Machine_Status(Characteristic):
+    """
+    The Fitness Machine Status characteristic is defined in the
+    Fitness Machine Service Specification.
+    """
+    FITNESS_MACHINE_STATUS_UUID = '2ADA'
+
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(
+                self, bus, index,
+                self.FITNESS_MACHINE_STATUS_UUID,
+                ['notify'],  # no broadcast
+                service)
+        self.notifying = False
+
+    def ftm_status_cb(self):
+        value = [dbus.Byte(0)]  # The Fitness Machine Status Op Code
+
+        ble.ftm_status()
+
+        # set FTM Status Op Code
+        value[0] = ble.status
+        print('FTM Status: ' + repr(self.ftm_cpv))
+        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        return self.notifying
+
+    def _update_ib_data_simulation(self):
+        print('Update FTM Status')
+
+        if not self.notifying:
+            return
+
+        GObject.timeout_add(1000, self.ftm_status_cb)
+
+    def StartNotify(self):
+        if self.notifying:
+            print('Already notifying, nothing to do')
+            return
+
+        self.notifying = True
+        self._update_ib_data_simulation()
+
+    def StopNotify(self):
+        if not self.notifying:
+            print('Not notifying, nothing to do')
+            return
+
+        self.notifying = False
+        self._update_ib_data_simulation()
+
+#############################################################################
 
 
 class CSCService(Service):
@@ -503,6 +690,10 @@ def find_adapter(bus):
 
 
 ble = ble_conf.bleValue()
+
+###########################################################################
+# Start GATT Server
+###########################################################################
 
 
 def main():
