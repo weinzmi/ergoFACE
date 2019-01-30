@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import time
-from random import randint
+import rs232
 
 
 class bleValue(object):
@@ -10,9 +10,9 @@ class bleValue(object):
 
     def ftm_ib(self):
         print("BLE VALUE  ---  FTM Indoor Bike Data")
-        self.speed = 30
-        self.cadence = 90
-        self.power = 250
+        self.speed = rs232.Speed
+        self.cadence = rs232.Cadence
+        self.power = rs232.Power
 
     def ftm_status(self):
         print("BLE VALUE  ---  FTM Status")
@@ -20,24 +20,25 @@ class bleValue(object):
 
     def Transmit_csc(self):
         print("BLE VALUE  ---  CSC values")
-        self.power = randint(100, 250)
+        self.power = rs232.Power
         # this is an acumulated value and is devided by the ble client
         # witht the delta of the last revolution time
-        self.wheel_revolutions = self.wheel_revolutions + 1
+
+        self.wheel_revolutions = self.wheel_revolutions1 + int(rs232.Speed/10)
         self.rev_time = time.time()
         # this is an acumulated value and is devided by the ble client
         # witht the delta of the last stroke time
-        self.stroke_count = self.stroke_count + 2
+        self.stroke_count = self.stroke_count + int(rs232.Cadence/60)
         self.last_stroke_time = time.time()
 
     def Transmit_cp(self):
         print("BLE VALUE  ---  CP values")
-        self.power = randint(100, 250)
+        self.power = rs232.Power
         # used different variables bacause they
         # are called twice in ble_gatt_server
-        self.wheel_revolutions1 = self.wheel_revolutions1 + 1
+        self.wheel_revolutions1 = self.wheel_revolutions1 + int(rs232.Speed/10)
         self.rev_time = time.time()
-        self.stroke_count1 = self.stroke_count1 + 2
+        self.stroke_count1 = self.stroke_count1 + int(rs232.Cadence/60)
         self.last_stroke_time = time.time()
 
     def Exit(self):

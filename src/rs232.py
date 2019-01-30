@@ -4,6 +4,33 @@ import serial
 import time
 
 
+circumference = 2000  # preset circumference(Radumfang) in mm
+valid = True
+rx_BuffChar = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+tx_BuffChar = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+# Variables
+ergobike_adr = 0x00  # ergobike adress; commented to avoid wrong initiation
+Power = 0  # actual cycling power
+Cadence = 0.0  # actual cycling cadence
+Speed = 0.0  # actual cycling speed
+# active = False  # someone is cycling on ergobike
+dT_c = 0.0  # delta time cadence
+dT_s = 0.0  # delta time speed
+
+prev_ms_p = 0  # last time power has been updated, in ms
+prev_ms_r = 0  # last time of Ergobike update, in ms
+prev_ms_s = 0  # last time speed was checked, in ms
+prev_ms_c = 0  # last time cadence was checked, in ms
+
+prev_ms_t = 0
+
+
+ser = serial.Serial('/dev/ttyUSB0',
+                    baudrate=9600,
+                    bytesize=8,
+                    timeout=0.05)
+
 ###############################################################
 # setup RS232 and get ergobike adress
 ###############################################################
@@ -34,7 +61,7 @@ def setup():
 ###############################################################
 
 
-def main():
+def loop():
     global Power
     global Speed
     global Cadence
@@ -61,10 +88,10 @@ def main():
             if valid and Speed > 0:
                 if (currentMillis - prev_ms_p) >= 1000:
                     prev_ms_p = currentMillis
-                    print("SUCCESS - Speed detected and running ")
-                    print("Speed [km/h]: ", Speed)
-                    print("Power [W]: ", Power)
-                    print("Cadence [U/min]: ", Cadence)
+                    # print("SUCCESS - Speed detected and running ")
+                    # print("Speed [km/h]: ", Speed)
+                    # print("Power [W]: ", Power)
+                    # print("Cadence [U/min]: ", Cadence)
 
     else:
         print("FAILED - Ergobike disconnected ")
@@ -106,9 +133,13 @@ def get_RunData():
                 Cadence = rx_BuffChar[6]
                 Speed = rx_BuffChar[7]
                 # Speed=Cadence/2.81
-                dT_s = (3.6 / Speed) * circumference
-                dT_s = 15 * dT_s
-                dT_c = (60000 / Cadence) / 0.974
+                if Speed == 0 or Cadence == 0:
+                    dT_s = 100000
+                    dT_c = 100000
+                else:
+                    dT_s = (3.6 / Speed) * circumference
+                    dT_s = 15 * dT_s
+                    dT_c = (60000 / Cadence) / 0.974
             else:  # ergobike is not active set values to zero
                 active = False
                 Speed = 0
@@ -197,9 +228,9 @@ def clear_RX_Buff():
 
 def printRX_Buff(rx_BuffLen):
     print("RX_byte: ")
-    for i in range(rx_BuffLen):
-        print(rx_BuffChar[i])
-        # print(rx_BuffChar(), sep=', ', end='', flush=True)
+    # for i in range(rx_BuffLen):
+    #     print(rx_BuffChar[i])
+    #     # print(rx_BuffChar(), sep=', ', end='', flush=True)
 
 
 ###############################################################
@@ -209,43 +240,19 @@ def printRX_Buff(rx_BuffLen):
 
 def printTX_Buff(tx_BuffLen):
     print("TX_byte: ")
-    for i in range(tx_BuffLen):
-        print(tx_BuffChar[i])
-        # print(tx_BuffChar(), sep=', ', end='', flush=True)
+    # for i in range(tx_BuffLen):
+    #     print(tx_BuffChar[i])
+    #     # print(tx_BuffChar(), sep=', ', end='', flush=True)
+
+
+def main():
+    # Constants
+    while True:
+        print("START - Setup ")
+        setup()
+        print("START - Loop ")
+        loop()
 
 
 if __name__ == "__main__":
-
-    # Constants
-    circumference = 2000  # preset circumference(Radumfang) in mm
-    valid = True
-    rx_BuffChar = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    tx_BuffChar = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-    # Variables
-    ergobike_adr = 0x00  # ergobike adress; commented to avoid wrong initiation
-    Power = 0  # actual cycling power
-    Cadence = 0.0  # actual cycling cadence
-    Speed = 0.0  # actual cycling speed
-    # active = False  # someone is cycling on ergobike
-    dT_c = 0.0  # delta time cadence
-    dT_s = 0.0  # delta time speed
-
-    prev_ms_p = 0  # last time power has been updated, in ms
-    prev_ms_r = 0  # last time of Ergobike update, in ms
-    prev_ms_s = 0  # last time speed was checked, in ms
-    prev_ms_c = 0  # last time cadence was checked, in ms
-
-    prev_ms_t = 0
-
-    while True:
-
-        ser = serial.Serial('/dev/ttyUSB0',
-                            baudrate=9600,
-                            bytesize=8,
-                            timeout=0.05)
-
-        print("START - Setup ")
-        setup()
-        print("START - Main ")
-        main()
+    main()
