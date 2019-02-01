@@ -38,23 +38,23 @@ ser = serial.Serial('/dev/ttyUSB0',
 
 def setup():
 
-        print("SUCCESS - Serial Adapter setup, wait 2 seconds ")
+        print("RS232 - SUCCESS - Serial Adapter setup, wait 2 seconds ")
         time.sleep(2)  # wait for cockpit to initialize
         try:
             ser.open()
         except Exception as e2:
-            print("ERROR - open serial port: ", e2)
+            print("RS232 - ERROR - open serial port: ", e2)
         if ser.isOpen():
             try:
                 ser.flushInput()  # flush input buffer, discarding all its contents
                 ser.flushOutput()  # flush output buffer, aborting current output
-                print("SUCCESS - Serial interface is open and ready to get ergobike adress ")
+                print("RS232 - SUCCESS - Serial interface is open and ready to get ergobike adress ")
                 get_cockadr()  # request cockpit adress
-                print("SUCCESS - Ergobike Adress: ", ergobike_adr)
+                print("RS232 - SUCCESS - Ergobike Adress: ", ergobike_adr)
             except Exception as e1:
-                print("ERROR - communicating...: ", e1)
+                print("RS232 - ERROR - communicating...: ", e1)
         else:
-            print("ERROR - cannot open serial port ")
+            print("RS232 - ERROR - cannot open serial port ")
 
 ###############################################################
 # main program
@@ -70,8 +70,9 @@ def loop():
     global prev_ms_p
 
     # during setup() there should be valid = True, Chick if fails
+    print("RS232 - SUCCESS - Ergobike connected and run data ")
     if valid:  # if a valid in read_RX_Buff = True; DAUM connected
-        print("SUCCESS - Start main program ")
+        print("RS232 - SUCCESS - Start loop program ")
         while valid:  # as long as the DAUM is still connected, get data
             currentMillis = int(round(time.time() * 1000))
             ###############################################################
@@ -79,7 +80,7 @@ def loop():
             ###############################################################
             if (currentMillis - prev_ms_r) >= 1000:
                 # if 1s has passed, read values from ergobike
-                print("SUCCESS - Ergobike connected and run data ")
+                # print("SUCCESS - Ergobike connected and run data ")
                 get_RunData()  # request rundata from ergobike
                 prev_ms_r = currentMillis
             ###############################################################
@@ -94,7 +95,7 @@ def loop():
                     # print("Cadence [U/min]: ", Cadence)
 
     else:
-        print("FAILED - Ergobike disconnected ")
+        print("RS232 - FAILED - Ergobike disconnected ")
         Power = 0
         Speed = 0.0
         Cadence = 0.0
@@ -109,6 +110,8 @@ def get_RunData():
     global Power
     global Speed
     global Cadence
+    global dT_c
+    global dT_s
 
     cmd = 0x40  # ergobike command for run data
 
@@ -117,13 +120,13 @@ def get_RunData():
 
     clear_RX_Buff()  # clear remining data in RX Buffer
     send_TX_Buff(2)  # RS232 send TX Buffer to ergobike Classic
-    printTX_Buff(2)  # print transmitted string
+    # printTX_Buff(2)  # print transmitted string
     time.sleep(0.05)
 
     valid = read_RX_Buff(19)  # pull rx data and store it in rx_buffer
 
     if (valid):
-        printRX_Buff(19)  # print received string
+        # printRX_Buff(19)  # print received string
         # parse buffer to get cycling data
         if rx_BuffChar[0] == cmd and rx_BuffChar[1] == ergobike_adr:
             # check cmd and ergobike adress
@@ -162,17 +165,17 @@ def get_cockadr():
 
     clear_RX_Buff()  # clear remining data in RX Buffer
     send_TX_Buff(1)  # RS232 send TX Telegramm to ergobike Classic
-    printTX_Buff(1)  # print TX Telegramm
+    # printTX_Buff(1)  # print TX Telegramm
 
     valid = read_RX_Buff(2)  # pull rx data and store it in rx_buffer
     if valid:
-        printRX_Buff(2)  # print received string
+        # printRX_Buff(2)  # print received string
         # parse rx buffer to get data
         if rx_BuffChar[0] == cmd:  # verify if data is valid
-            print("SUCCESS - Ergobike cockpit adress read")
+            print("RS232 - SUCCESS - Ergobike cockpit adress read")
             ergobike_adr = rx_BuffChar[1]
         else:
-            print("FAILED - Ergobike cockpit adress read")
+            print("RS232 - FAILED - Ergobike cockpit adress read")
             ergobike_adr = 0x00
 
 ###############################################################
@@ -201,7 +204,7 @@ def read_RX_Buff(rx_BuffLen):
             currentMillis = int(round(time.time() * 1000))
             if (currentMillis - startMillis) >= 500:  # 5sec timeout
                 valid = False  # data in Buffer is not valid
-                print("FAILED - Ergobike not responding!")
+                print("RS232 - FAILED - Ergobike not responding!")
                 break
 
         if valid:
@@ -226,11 +229,11 @@ def clear_RX_Buff():
 ###############################################################
 
 
-def printRX_Buff(rx_BuffLen):
-    print("RX_byte: ")
-    # for i in range(rx_BuffLen):
-    #     print(rx_BuffChar[i])
-    #     # print(rx_BuffChar(), sep=', ', end='', flush=True)
+# def printRX_Buff(rx_BuffLen):
+#     print("RX_byte: ")
+#     # for i in range(rx_BuffLen):
+#     #     print(rx_BuffChar[i])
+#     #     # print(rx_BuffChar(), sep=', ', end='', flush=True)
 
 
 ###############################################################
@@ -238,19 +241,19 @@ def printRX_Buff(rx_BuffLen):
 ###############################################################
 
 
-def printTX_Buff(tx_BuffLen):
-    print("TX_byte: ")
-    # for i in range(tx_BuffLen):
-    #     print(tx_BuffChar[i])
-    #     # print(tx_BuffChar(), sep=', ', end='', flush=True)
+# def printTX_Buff(tx_BuffLen):
+#     print("TX_byte: ")
+#     # for i in range(tx_BuffLen):
+#     #     print(tx_BuffChar[i])
+#     #     # print(tx_BuffChar(), sep=', ', end='', flush=True)
 
 
 def main():
     # Constants
     while True:
-        print("START - Setup ")
+        print("RS232 - START - Setup ")
         setup()
-        print("START - Loop ")
+        print("RS232 - START - Loop ")
         loop()
 
 

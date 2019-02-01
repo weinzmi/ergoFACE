@@ -65,7 +65,7 @@ class Application(dbus.service.Object):
     @dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')
     def GetManagedObjects(self):
         response = {}
-        print('GetManagedObjects')
+        print('BLE GATT - GetManagedObjects')
 
         for service in self.services:
             response[service.get_path()] = service.get_properties()
@@ -183,22 +183,22 @@ class Characteristic(dbus.service.Object):
                          in_signature='a{sv}',
                          out_signature='ay')
     def ReadValue(self, options):
-        print('Default ReadValue called, returning error')
+        print('BLE GATT - Default ReadValue called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE, in_signature='aya{sv}')
     def WriteValue(self, value, options):
-        print('Default WriteValue called, returning error')
+        print('BLE GATT - Default WriteValue called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE)
     def StartNotify(self):
-        print('Default StartNotify called, returning error')
+        print('BLE GATT - Default StartNotify called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE)
     def StopNotify(self):
-        print('Default StopNotify called, returning error')
+        print('BLE GATT - Default StopNotify called, returning error')
         raise NotSupportedException()
 
     @dbus.service.signal(DBUS_PROP_IFACE,
@@ -245,12 +245,12 @@ class Descriptor(dbus.service.Object):
                          in_signature='a{sv}',
                          out_signature='ay')
     def ReadValue(self, options):
-        print('Default ReadValue called, returning error')
+        print('BLE GATT - Default ReadValue called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_DESC_IFACE, in_signature='aya{sv}')
     def WriteValue(self, value, options):
-        print('Default WriteValue called, returning error')
+        print('BLE GATT - Default WriteValue called, returning error')
         raise NotSupportedException()
 
 ###########################################################################
@@ -302,7 +302,7 @@ class Fitness_Machine_Feature(Characteristic):
                       dbus.Byte(0)]
 
     def ReadValue(self, options):
-        print('Fitness Machine Feature Read: ' + repr(self.value))
+        print('BLE GATT - Fitness Machine Feature Read: ' + repr(self.value))
         return self.value
 
 
@@ -346,7 +346,7 @@ class Indoor_Bike_Data(Characteristic):
         return self.notifying
 
     def _update_ib_data_simulation(self):
-        print('Update FTM Indoor Bike Data')
+        print('BLE GATT - Update FTM Indoor Bike Data')
 
         if not self.notifying:
             return
@@ -355,7 +355,7 @@ class Indoor_Bike_Data(Characteristic):
 
     def StartNotify(self):
         if self.notifying:
-            print('Already notifying, nothing to do')
+            print('BLE GATT - Already notifying, nothing to do')
             return
 
         self.notifying = True
@@ -363,7 +363,7 @@ class Indoor_Bike_Data(Characteristic):
 
     def StopNotify(self):
         if not self.notifying:
-            print('Not notifying, nothing to do')
+            print('BLE GATT - Not notifying, nothing to do')
             return
 
         self.notifying = False
@@ -385,13 +385,13 @@ class Fitness_Machine_Control_Point(Characteristic):
                 service)
 
     def WriteValue(self, value, options):
-        print('Fitness Machine Control Point WriteValue called')
+        print('BLE GATT - Fitness Machine Control Point WriteValue called')
 
         if len(value) != 1:
             raise InvalidValueLengthException()
 
         self.ftm_cpv = value[0]  # Fitness Machine Control Point Value
-        print('FTM Control Point value: ' + repr(self.ftm_cpv))
+        print('BLE GATT - FTM Control Point value: ' + repr(self.ftm_cpv))
 
         if self.ftm_cpv != 1:
             raise FailedException("0x80")
@@ -419,12 +419,12 @@ class Fitness_Machine_Status(Characteristic):
 
         # set FTM Status Op Code
         value[0] = ble.status
-        print('FTM Status: ' + repr(self.ftm_cpv))
+        print('BLE GATT - FTM Status: ' + repr(self.ftm_cpv))
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return self.notifying
 
     def _update_ib_data_simulation(self):
-        print('Update FTM Status')
+        print('BLE GATT - Update FTM Status')
 
         if not self.notifying:
             return
@@ -433,7 +433,7 @@ class Fitness_Machine_Status(Characteristic):
 
     def StartNotify(self):
         if self.notifying:
-            print('Already notifying, nothing to do')
+            print('BLE GATT - Already notifying, nothing to do')
             return
 
         self.notifying = True
@@ -441,7 +441,7 @@ class Fitness_Machine_Status(Characteristic):
 
     def StopNotify(self):
         if not self.notifying:
-            print('Not notifying, nothing to do')
+            print('BLE GATT - Not notifying, nothing to do')
             return
 
         self.notifying = False
@@ -487,7 +487,7 @@ class CSCMeasurement(Characteristic):
         value[2] = (ble.wheel_revolutions & 0xFF00) >> 8
         value[1] = (ble.wheel_revolutions & 0xFF)
 
-        time_in_1024_sec = int(ble.rev_time * 1024) & 0xFFFF
+        time_in_1024_sec = int(ble.rev_time) & 0xFFFF
         value[6] = (time_in_1024_sec & 0xFF00) >> 8
         value[5] = (time_in_1024_sec & 0xFF)
 
@@ -495,7 +495,7 @@ class CSCMeasurement(Characteristic):
         value[8] = (ble.stroke_count & 0xFF00) >> 8
         value[7] = (ble.stroke_count & 0xFF)
 
-        time_in_1024_sec = int(ble.last_stroke_time * 1024) & 0xFFFF
+        time_in_1024_sec = int(ble.last_stroke_time) & 0xFFFF
         value[10] = (time_in_1024_sec & 0xFF00) >> 8
         value[9] = (time_in_1024_sec & 0xFF)
 
@@ -503,7 +503,7 @@ class CSCMeasurement(Characteristic):
         return self.notifying
 
     def _update_csc_msrmt_simulation(self):
-        print('Update CSC Measurement Simulation')
+        print('BLE GATT - Update CSC Measurement')
 
         if not self.notifying:
             return
@@ -512,7 +512,7 @@ class CSCMeasurement(Characteristic):
 
     def StartNotify(self):
         if self.notifying:
-            print('Already notifying, nothing to do')
+            print('BLE GATT - Already notifying, nothing to do')
             return
 
         self.notifying = True
@@ -520,7 +520,7 @@ class CSCMeasurement(Characteristic):
 
     def StopNotify(self):
         if not self.notifying:
-            print('Not notifying, nothing to do')
+            print('BLE GATT - Not notifying, nothing to do')
             return
 
         self.notifying = False
@@ -542,7 +542,7 @@ class CSCFeatureCharacteristic(Characteristic):
         self.value = [dbus.Byte(0 | (1 << 0) | (1 << 1)), dbus.Byte(0)]
 
     def ReadValue(self, options):
-        print('CSCFeatureCharacteristic Read: ' + repr(self.value))
+        print('BLE GATT - CSCFeatureCharacteristic Read: ' + repr(self.value))
         return self.value
 
 
@@ -592,7 +592,7 @@ class CyclingPowerMeasurement(Characteristic):
         value[5] = (ble.wheel_revolutions1 & 0xFF00) >> 8
         value[4] = (ble.wheel_revolutions1 & 0xFF)
 
-        time_in_2048_sec = int(ble.rev_time * 2048) & 0xFFFF
+        time_in_2048_sec = int(ble.rev_time1) & 0xFFFF
         value[9] = (time_in_2048_sec & 0xFF00) >> 8
         value[8] = (time_in_2048_sec & 0xFF)
 
@@ -600,7 +600,7 @@ class CyclingPowerMeasurement(Characteristic):
         value[11] = (ble.stroke_count1 & 0xFF00) >> 8
         value[10] = (ble.stroke_count1 & 0xFF)
 
-        time_in_1024_sec = int(ble.last_stroke_time * 1024) & 0xFFFF
+        time_in_1024_sec = int(ble.last_stroke_time1) & 0xFFFF
         value[13] = (time_in_1024_sec & 0xFF00) >> 8
         value[12] = (time_in_1024_sec & 0xFF)
 
@@ -608,7 +608,7 @@ class CyclingPowerMeasurement(Characteristic):
         return self.notifying
 
     def _update_cp_msrmt_simulation(self):
-        print('Update Power Measurement Simulation')
+        print('BLE GATT - Update Power Measurement')
 
         if not self.notifying:
             return
@@ -617,7 +617,7 @@ class CyclingPowerMeasurement(Characteristic):
 
     def StartNotify(self):
         if self.notifying:
-            print('Already notifying, nothing to do')
+            print('BLE GATT - Already notifying, nothing to do')
             return
 
         self.notifying = True
@@ -625,7 +625,7 @@ class CyclingPowerMeasurement(Characteristic):
 
     def StopNotify(self):
         if not self.notifying:
-            print('Not notifying, nothing to do')
+            print('BLE GATT - Not notifying, nothing to do')
             return
 
         self.notifying = False
@@ -645,7 +645,7 @@ class CyclingPowerFeatureCharacteristic(Characteristic):
         self.value = [dbus.Byte(0), dbus.Byte(0)]
 
     def ReadValue(self, options):
-        print('CyclingPowerFeatureCharacteristic Read: ' + repr(self.value))
+        print('BLE GATT - CyclingPowerFeatureCharacteristic Read: ' + repr(self.value))
         return self.value
 
 
@@ -664,16 +664,16 @@ class SensorLocation(Characteristic):
         self.value[0] = 13
 
     def ReadValue(self, options):
-        print('SensorLocation Read: ' + repr(self.value))
+        print('BLE GATT - SensorLocation Read: ' + repr(self.value))
         return self.value
 
 
 def register_app_cb():
-    print('GATT application registered')
+    print('BLE GATT - application registered')
 
 
 def register_app_error_cb(error):
-    print('Failed to register application: ' + str(error))
+    print('BLE GATT - Failed to register application: ' + str(error))
     mainloop.quit()
 
 
@@ -705,7 +705,7 @@ def main():
 
     adapter = find_adapter(bus)
     if not adapter:
-        print('GattManager1 interface not found')
+        print('BLE GATT - GattManager1 interface not found')
         return
 
     service_manager = dbus.Interface(
@@ -716,7 +716,7 @@ def main():
 
     mainloop = GObject.MainLoop()
 
-    print('Registering GATT application...')
+    print('BLE GATT - Registering GATT application...')
 
     service_manager.RegisterApplication(app.get_path(), {},
                                         reply_handler=register_app_cb,
