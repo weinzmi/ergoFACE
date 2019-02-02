@@ -46,9 +46,10 @@ def setup():
             print("RS232 - ERROR - open serial port: ", e2)
         if ser.isOpen():
             try:
-                ser.flushInput()  # flush input buffer, discarding all its contents
-                ser.flushOutput()  # flush output buffer, aborting current output
-                print("RS232 - SUCCESS - Serial interface is open and ready to get ergobike adress ")
+                ser.flushInput()  # flush input buffer
+                ser.flushOutput()  # flush output buffer
+                print("RS232 - SUCCESS - Serial interface is ",
+                      "open and ready to get ergobike adress ")
                 get_cockadr()  # request cockpit adress
                 print("RS232 - SUCCESS - Ergobike Adress: ", ergobike_adr)
             except Exception as e1:
@@ -66,15 +67,40 @@ def loop():
     global Speed
     global Cadence
 
-    global prev_ms_r
     global prev_ms_p
+    global prev_ms_r
+    global prev_ms_s
+    global prev_ms_c
+
+    global Wheel_Rev
+    global Crank_Rev
+    global Crank_LastEvTime
+    global Wheel_LastEvTime
+    global dT_c
+    global dT_s
+    global T_s
+    global gear
+
+    Wheel_Rev = 1  # Wheel revolutions since last update
+    Crank_Rev = 1  # Crank revolutions since last update
+    Crank_LastEvTime = 1  # last event time when crank was detected
+    Wheel_LastEvTime = 1  # last event time when wheel was detected
+    gear = 15  # prerequisite for gearshifting
+    dT_c = 0
+    dT_s = 0
+    T_s = 1
+
+    prev_ms_p = 0  # last time power has been updated, in ms
+    prev_ms_r = 0  # last time of Ergobike update, in ms
+    prev_ms_s = 0  # last time speed was checked, in ms
+    prev_ms_c = 0  # last time cadence was checked, in ms
 
     # during setup() there should be valid = True, Chick if fails
     print("RS232 - SUCCESS - Ergobike connected and run data ")
     if valid:  # if a valid in read_RX_Buff = True; DAUM connected
         print("RS232 - SUCCESS - Start loop program ")
         while valid:  # as long as the DAUM is still connected, get data
-            currentMillis = int(round(time.time() * 1000))
+            currentMillis = int(round(time.time() * 1024))
             ###############################################################
             # update run data
             ###############################################################
@@ -87,12 +113,23 @@ def loop():
             # Print run data
             ###############################################################
             if valid and Speed > 0:
-                if (currentMillis - prev_ms_p) >= 1000:
-                    prev_ms_p = currentMillis
-                    # print("SUCCESS - Speed detected and running ")
-                    # print("Speed [km/h]: ", Speed)
-                    # print("Power [W]: ", Power)
-                    # print("Cadence [U/min]: ", Cadence)
+                if (currentMillis - prev_ms_c) >= dT_c:
+                    prev_ms_c = currentMillis
+                    Crank_Rev = Crank_Rev + 1
+                    Crank_LastEvTime = Crank_LastEvTime + dT_c
+
+                if (currentMillis - prev_ms_s) >= dT_s:
+                    prev_ms_s = currentMillis
+                    Wheel_Rev = Wheel_Rev + gear
+                    T_s = T_s + dT_s
+                    Wheel_LastEvTime = round(T_s)
+
+                # if (currentMillis - prev_ms_p) >= 1000:
+                #     prev_ms_p = currentMillis
+                #     # print("SUCCESS - Speed detected and running ")
+                #     # print("Speed [km/h]: ", Speed)
+                #     # print("Power [W]: ", Power)
+                #     # print("Cadence [U/min]: ", Cadence)
 
     else:
         print("RS232 - FAILED - Ergobike disconnected ")
@@ -194,14 +231,14 @@ def send_TX_Buff(tx_BuffLen):
 
 
 def read_RX_Buff(rx_BuffLen):
-    startMillis = int(round(time.time() * 1000))
+    startMillis = int(round(time.time() * 1024))
     currentMillis = 0
 
     valid = True
     for i in range(rx_BuffLen):
         while valid and ser.inWaiting() == 0:  # delay until byte was received
             time.sleep(0.001)  # Serial.println("*delay*")
-            currentMillis = int(round(time.time() * 1000))
+            currentMillis = int(round(time.time() * 1024))
             if (currentMillis - startMillis) >= 500:  # 5sec timeout
                 valid = False  # data in Buffer is not valid
                 print("RS232 - FAILED - Ergobike not responding!")
@@ -221,7 +258,7 @@ def read_RX_Buff(rx_BuffLen):
 def clear_RX_Buff():
 
     while ser.inWaiting() > 0:
-        tmp = ser.read()
+        ser.read()
 
 
 ###############################################################

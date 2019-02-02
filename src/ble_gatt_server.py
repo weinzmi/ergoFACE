@@ -6,6 +6,7 @@ import dbus.mainloop.glib
 import dbus.service
 import ble_conf
 
+
 try:
     from gi.repository import GObject
 except ImportError:
@@ -302,7 +303,11 @@ class Fitness_Machine_Feature(Characteristic):
                       dbus.Byte(0)]
 
     def ReadValue(self, options):
-        print('BLE GATT - Fitness Machine Feature Read: ' + repr(self.value))
+        print('BLE GATT -FTM - Machine Feature Read: ', end="")
+        for i, val in enumerate(self.value):
+            # zfill(8) because of octets
+            print(bin(self.value[i])[2:].zfill(8)[::-1], "| ", end="")
+        print(i + 1, "bytes")
         return self.value
 
 
@@ -331,22 +336,28 @@ class Indoor_Bike_Data(Characteristic):
         ble.ftm_ib()
 
         # Build Instantaneous Speed data - little endian
-        value[3] = (ble.speed & 0xFF00) >> 8
-        value[2] = (ble.speed & 0xFF)
+        # convert to uint16
+        uint_speed = int(ble.speed) & 0xFFFF
+        value[3] = (uint_speed & 0xFF00) >> 8
+        value[2] = (uint_speed & 0xFF)
 
         # Build Instantaneous Cadence data - little endian
-        value[5] = (ble.cadence & 0xFF00) >> 8
-        value[4] = (ble.cadence & 0xFF)
+        # convert to uint16
+        uint_cadence = int(ble.cadence) & 0xFFFF
+        value[5] = (uint_cadence & 0xFF00) >> 8
+        value[4] = (uint_cadence & 0xFF)
 
         # Build Instantaneous Power data - little endian
-        value[7] = (ble.power & 0xFF00) >> 8
-        value[6] = (ble.power & 0xFF)
+        # convert to sint16-> do nothing
+        uint_power = int(ble.power)
+        value[7] = (uint_power & 0xFF00) >> 8
+        value[6] = (uint_power & 0xFF)
 
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return self.notifying
 
     def _update_ib_data_simulation(self):
-        print('BLE GATT - Update FTM Indoor Bike Data')
+        print('BLE GATT - FTM - Update Indoor Bike Data')
 
         if not self.notifying:
             return
@@ -355,7 +366,7 @@ class Indoor_Bike_Data(Characteristic):
 
     def StartNotify(self):
         if self.notifying:
-            print('BLE GATT - Already notifying, nothing to do')
+            print('BLE GATT - FTM - Already notifying, nothing to do')
             return
 
         self.notifying = True
@@ -363,7 +374,7 @@ class Indoor_Bike_Data(Characteristic):
 
     def StopNotify(self):
         if not self.notifying:
-            print('BLE GATT - Not notifying, nothing to do')
+            print('BLE GATT - FTM - Not notifying, nothing to do')
             return
 
         self.notifying = False
@@ -385,13 +396,13 @@ class Fitness_Machine_Control_Point(Characteristic):
                 service)
 
     def WriteValue(self, value, options):
-        print('BLE GATT - Fitness Machine Control Point WriteValue called')
+        print('BLE GATT - FTM - Control Point WriteValue called')
 
-        if len(value) != 1:
-            raise InvalidValueLengthException()
-
+        # if len(value) != 1:
+        #     raise InvalidValueLengthException()
+        # received 0, 7, 17 = Request Control, Start or Resume, Set Indoor Bike Simulation Parameters
         self.ftm_cpv = value[0]  # Fitness Machine Control Point Value
-        print('BLE GATT - FTM Control Point value: ' + repr(self.ftm_cpv))
+        print('BLE GATT - FTM - Control Point value: ' + repr(self.ftm_cpv))
 
         if self.ftm_cpv != 1:
             raise FailedException("0x80")
@@ -413,18 +424,18 @@ class Fitness_Machine_Status(Characteristic):
         self.notifying = False
 
     def ftm_status_cb(self):
-        value = [dbus.Byte(0)]  # The Fitness Machine Status Op Code
+        self.value = [dbus.Byte(0)]  # The Fitness Machine Status Op Code
 
         ble.ftm_status()
 
         # set FTM Status Op Code
-        value[0] = ble.status
-        print('BLE GATT - FTM Status: ' + repr(self.ftm_cpv))
-        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        self.value[0] = ble.status
+        print('BLE GATT - FTM - Status: ' + repr(self.value))
+        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': self.value}, [])
         return self.notifying
 
     def _update_ib_data_simulation(self):
-        print('BLE GATT - Update FTM Status')
+        print('BLE GATT - FTM - Update Status')
 
         if not self.notifying:
             return
@@ -433,7 +444,7 @@ class Fitness_Machine_Status(Characteristic):
 
     def StartNotify(self):
         if self.notifying:
-            print('BLE GATT - Already notifying, nothing to do')
+            print('BLE GATT - FTM - Already notifying, nothing to do')
             return
 
         self.notifying = True
@@ -441,7 +452,7 @@ class Fitness_Machine_Status(Characteristic):
 
     def StopNotify(self):
         if not self.notifying:
-            print('BLE GATT - Not notifying, nothing to do')
+            print('BLE GATT - FTM -Not notifying, nothing to do')
             return
 
         self.notifying = False
@@ -451,21 +462,21 @@ class Fitness_Machine_Status(Characteristic):
 
 
 class CSCService(Service):
-    TEST_SVC_UUID = '1816'
+    CSC_SERVICE_UUID = '1816'
 
     def __init__(self, bus, index):
-        Service.__init__(self, bus, index, self.TEST_SVC_UUID, True)
+        Service.__init__(self, bus, index, self.CSC_SERVICE_UUID, True)
         self.add_characteristic(CSCMeasurement(bus, 0, self))
         self.add_characteristic(CSCFeatureCharacteristic(bus, 1, self))
 
 
 class CSCMeasurement(Characteristic):
-    CYCLING_POWER_MEASUREMENT_UUID = '2a5b'
+    CSC_MEASUREMENT_UUID = '2a5b'
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
                 self, bus, index,
-                self.CYCLING_POWER_MEASUREMENT_UUID,
+                self.CSC_MEASUREMENT_UUID,
                 ['notify', 'broadcast'],
                 service)
         self.notifying = False
@@ -486,24 +497,30 @@ class CSCMeasurement(Characteristic):
         value[3] = (ble.wheel_revolutions & 0xFF0000) >> 16
         value[2] = (ble.wheel_revolutions & 0xFF00) >> 8
         value[1] = (ble.wheel_revolutions & 0xFF)
-
+        # & 0xFFFF is to convert int to uint16
         time_in_1024_sec = int(ble.rev_time) & 0xFFFF
         value[6] = (time_in_1024_sec & 0xFF00) >> 8
         value[5] = (time_in_1024_sec & 0xFF)
-
+        # print("BLE GATT - Revolution time: ", time_in_1024_sec)
         # Build crank (stroke) data - little endian
         value[8] = (ble.stroke_count & 0xFF00) >> 8
         value[7] = (ble.stroke_count & 0xFF)
-
+        # & 0xFFFF is to convert int to uint16
         time_in_1024_sec = int(ble.last_stroke_time) & 0xFFFF
         value[10] = (time_in_1024_sec & 0xFF00) >> 8
         value[9] = (time_in_1024_sec & 0xFF)
+        # print("BLE GATT - Stroke time: ", time_in_1024_sec)
+
+        print('BLE GATT - CSC - Measurement: ', end="")
+        for i, val in enumerate(value):
+            print(hex(value[i]), "| ", end="")
+        print(i + 1, "chars")
 
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return self.notifying
 
     def _update_csc_msrmt_simulation(self):
-        print('BLE GATT - Update CSC Measurement')
+        print('BLE GATT - CSC - Update CSC Measurement')
 
         if not self.notifying:
             return
@@ -512,7 +529,7 @@ class CSCMeasurement(Characteristic):
 
     def StartNotify(self):
         if self.notifying:
-            print('BLE GATT - Already notifying, nothing to do')
+            print('BLE GATT - CSC - Already notifying, nothing to do')
             return
 
         self.notifying = True
@@ -520,7 +537,7 @@ class CSCMeasurement(Characteristic):
 
     def StopNotify(self):
         if not self.notifying:
-            print('BLE GATT - Not notifying, nothing to do')
+            print('BLE GATT - CSC - Not notifying, nothing to do')
             return
 
         self.notifying = False
@@ -529,12 +546,12 @@ class CSCMeasurement(Characteristic):
 
 class CSCFeatureCharacteristic(Characteristic):
 
-    CYCLING_POWER_FEATURE_UUID = '2a5c'
+    CSC_FEATURE_UUID = '2a5c'
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
                 self, bus, index,
-                self.CYCLING_POWER_FEATURE_UUID,
+                self.CSC_FEATURE_UUID,
                 ['read'],
                 service)
         # Bits 0,1 enable wheel and crank data
@@ -542,15 +559,18 @@ class CSCFeatureCharacteristic(Characteristic):
         self.value = [dbus.Byte(0 | (1 << 0) | (1 << 1)), dbus.Byte(0)]
 
     def ReadValue(self, options):
-        print('BLE GATT - CSCFeatureCharacteristic Read: ' + repr(self.value))
+        print('BLE GATT - CSC - Feature Characteristic Read: ', end="")
+        for i, val in enumerate(self.value):
+            print(bin(self.value[i])[2:].zfill(8)[::-1], "| ", end="")
+        print(i + 1, "bytes")
         return self.value
 
 
 class CyclingPowerService(Service):
-    TEST_SVC_UUID = '1818'
+    CYCLING_POWER_SERVICE_UUID = '1818'
 
     def __init__(self, bus, index):
-        Service.__init__(self, bus, index, self.TEST_SVC_UUID, True)
+        Service.__init__(self, bus, index, self.CYCLING_POWER_SERVICE_UUID, True)
         self.add_characteristic(CyclingPowerMeasurement(bus, 0, self))
         self.add_characteristic(CyclingPowerFeatureCharacteristic(bus, 1, self))
         self.add_characteristic(SensorLocation(bus, 2, self))
@@ -587,29 +607,34 @@ class CyclingPowerMeasurement(Characteristic):
         value[2] = (ble.power & 0xFF)
 
         # Build revolution data - little endian
-        value[7] = (ble.wheel_revolutions1 & 0xFF000000) >> 24
-        value[6] = (ble.wheel_revolutions1 & 0xFF0000) >> 16
-        value[5] = (ble.wheel_revolutions1 & 0xFF00) >> 8
-        value[4] = (ble.wheel_revolutions1 & 0xFF)
-
-        time_in_2048_sec = int(ble.rev_time1) & 0xFFFF
+        value[7] = (ble.wheel_revolutions & 0xFF000000) >> 24
+        value[6] = (ble.wheel_revolutions & 0xFF0000) >> 16
+        value[5] = (ble.wheel_revolutions & 0xFF00) >> 8
+        value[4] = (ble.wheel_revolutions & 0xFF)
+        # & 0xFFFF is to convert int to uint16
+        # this has a basis of 2048 seconds and is multiplied by two
+        time_in_2048_sec = (int(ble.rev_time) * 2) & 0xFFFF
         value[9] = (time_in_2048_sec & 0xFF00) >> 8
         value[8] = (time_in_2048_sec & 0xFF)
 
         # Build crank (stroke) data - little endian
-        value[11] = (ble.stroke_count1 & 0xFF00) >> 8
-        value[10] = (ble.stroke_count1 & 0xFF)
-
-        time_in_1024_sec = int(ble.last_stroke_time1) & 0xFFFF
+        value[11] = (ble.stroke_count & 0xFF00) >> 8
+        value[10] = (ble.stroke_count & 0xFF)
+        # & 0xFFFF is to convert int to uint16
+        time_in_1024_sec = int(ble.last_stroke_time) & 0xFFFF
         value[13] = (time_in_1024_sec & 0xFF00) >> 8
         value[12] = (time_in_1024_sec & 0xFF)
+
+        print('BLE GATT - CP - Measurement: ', end="")
+        for i, val in enumerate(value):
+            print(hex(value[i]), "| ", end="")
+        print(i + 1, "chars")
 
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return self.notifying
 
     def _update_cp_msrmt_simulation(self):
-        print('BLE GATT - Update Power Measurement')
-
+        print('BLE GATT - CP - Update Power Measurement')
         if not self.notifying:
             return
 
@@ -617,7 +642,7 @@ class CyclingPowerMeasurement(Characteristic):
 
     def StartNotify(self):
         if self.notifying:
-            print('BLE GATT - Already notifying, nothing to do')
+            print('BLE GATT - CP - Already notifying, nothing to do')
             return
 
         self.notifying = True
@@ -625,7 +650,7 @@ class CyclingPowerMeasurement(Characteristic):
 
     def StopNotify(self):
         if not self.notifying:
-            print('BLE GATT - Not notifying, nothing to do')
+            print('BLE GATT - CP - Not notifying, nothing to do')
             return
 
         self.notifying = False
@@ -642,10 +667,13 @@ class CyclingPowerFeatureCharacteristic(Characteristic):
                 self.CYCLING_POWER_FEATURE_UUID,
                 ['read'],
                 service)
-        self.value = [dbus.Byte(0), dbus.Byte(0)]
+        self.value = [dbus.Byte(0), dbus.Byte(0), dbus.Byte(0), dbus.Byte(0)]
 
     def ReadValue(self, options):
-        print('BLE GATT - CyclingPowerFeatureCharacteristic Read: ' + repr(self.value))
+        print('BLE GATT - CP - Feature Characteristic Read: ', end="")
+        for i, val in enumerate(self.value):
+            print(bin(self.value[i])[2:].zfill(8)[::-1], "| ", end="")
+        print(i + 1, "bytes")
         return self.value
 
 
@@ -664,16 +692,19 @@ class SensorLocation(Characteristic):
         self.value[0] = 13
 
     def ReadValue(self, options):
-        print('BLE GATT - SensorLocation Read: ' + repr(self.value))
+        print('BLE GATT - CP - Sensor Location Read: ', end="")
+        for i, val in enumerate(self.value):
+            print(self.value[i], "| ", end="")
+        print(i + 1, "enumerates")
         return self.value
 
 
 def register_app_cb():
-    print('BLE GATT - application registered')
+    print('BLE GATT - CP - application registered')
 
 
 def register_app_error_cb(error):
-    print('BLE GATT - Failed to register application: ' + str(error))
+    print('BLE GATT - CP - Failed to register application: ' + str(error))
     mainloop.quit()
 
 
