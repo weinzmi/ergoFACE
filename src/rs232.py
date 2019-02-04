@@ -14,9 +14,17 @@ ergobike_adr = 0x00  # ergobike adress; commented to avoid wrong initiation
 Power = 0  # actual cycling power
 Cadence = 0.0  # actual cycling cadence
 Speed = 0.0  # actual cycling speed
+
+Wheel_Rev = 1  # Wheel revolutions since last update
+Crank_Rev = 1  # Crank revolutions since last update
+Crank_LastEvTime = 1  # last event time when crank was detected
+Wheel_LastEvTime = 1  # last event time when wheel was detected
+gear = 15  # prerequisite for gearshifting
+
 # active = False  # someone is cycling on ergobike
 dT_c = 0.0  # delta time cadence
 dT_s = 0.0  # delta time speed
+T_s = 1
 
 prev_ms_p = 0  # last time power has been updated, in ms
 prev_ms_r = 0  # last time of Ergobike update, in ms
@@ -81,26 +89,12 @@ def loop():
     global T_s
     global gear
 
-    Wheel_Rev = 1  # Wheel revolutions since last update
-    Crank_Rev = 1  # Crank revolutions since last update
-    Crank_LastEvTime = 1  # last event time when crank was detected
-    Wheel_LastEvTime = 1  # last event time when wheel was detected
-    gear = 15  # prerequisite for gearshifting
-    dT_c = 0
-    dT_s = 0
-    T_s = 1
-
-    prev_ms_p = 0  # last time power has been updated, in ms
-    prev_ms_r = 0  # last time of Ergobike update, in ms
-    prev_ms_s = 0  # last time speed was checked, in ms
-    prev_ms_c = 0  # last time cadence was checked, in ms
-
     # during setup() there should be valid = True, Chick if fails
     print("RS232 - SUCCESS - Ergobike connected and run data ")
     if valid:  # if a valid in read_RX_Buff = True; DAUM connected
         print("RS232 - SUCCESS - Start loop program ")
         while valid:  # as long as the DAUM is still connected, get data
-            currentMillis = int(round(time.time() * 1024))
+            currentMillis = int(round(time.time() * 1000))
             ###############################################################
             # update run data
             ###############################################################
@@ -113,23 +107,28 @@ def loop():
             # Print run data
             ###############################################################
             if valid and Speed > 0:
-                if (currentMillis - prev_ms_c) >= dT_c:
-                    prev_ms_c = currentMillis
-                    Crank_Rev = Crank_Rev + 1
-                    Crank_LastEvTime = Crank_LastEvTime + dT_c
 
+                # if commented out cadence and speed are synchrnous transmitted
                 if (currentMillis - prev_ms_s) >= dT_s:
+                    # print("currentMilis", currentMillis, "prev_ms_s", prev_ms_c, "dT_c", dT_s)
                     prev_ms_s = currentMillis
                     Wheel_Rev = Wheel_Rev + gear
                     T_s = T_s + dT_s
                     Wheel_LastEvTime = round(T_s)
 
-                # if (currentMillis - prev_ms_p) >= 1000:
-                #     prev_ms_p = currentMillis
-                #     # print("SUCCESS - Speed detected and running ")
-                #     # print("Speed [km/h]: ", Speed)
-                #     # print("Power [W]: ", Power)
-                #     # print("Cadence [U/min]: ", Cadence)
+                if (currentMillis - prev_ms_c) >= dT_c:
+                    # print("currentMilis", currentMillis, "prev_ms_c", prev_ms_c, "dT_c", dT_c)
+                    prev_ms_c = currentMillis
+                    Crank_Rev = Crank_Rev + 1
+                    Crank_LastEvTime = Crank_LastEvTime + dT_c
+
+                # Print values every 1000ms
+                if (currentMillis - prev_ms_p) >= 1000:
+                    prev_ms_p = currentMillis
+                    print("SUCCESS - Speed detected and running ")
+                    print("Speed [km/h]: ", Speed)
+                    print("Power [W]: ", Power)
+                    print("Cadence [U/min]: ", Cadence)
 
     else:
         print("RS232 - FAILED - Ergobike disconnected ")
@@ -179,7 +178,7 @@ def get_RunData():
                 else:
                     dT_s = (3.6 / Speed) * circumference
                     dT_s = 15 * dT_s
-                    dT_c = (60000 / Cadence) / 0.974
+                    dT_c = (60000 / Cadence) / 0.974  # 0.974 is 1024s base
             else:  # ergobike is not active set values to zero
                 active = False
                 Speed = 0
@@ -231,14 +230,14 @@ def send_TX_Buff(tx_BuffLen):
 
 
 def read_RX_Buff(rx_BuffLen):
-    startMillis = int(round(time.time() * 1024))
+    startMillis = int(round(time.time() * 1000))
     currentMillis = 0
 
     valid = True
     for i in range(rx_BuffLen):
         while valid and ser.inWaiting() == 0:  # delay until byte was received
             time.sleep(0.001)  # Serial.println("*delay*")
-            currentMillis = int(round(time.time() * 1024))
+            currentMillis = int(round(time.time() * 1000))
             if (currentMillis - startMillis) >= 500:  # 5sec timeout
                 valid = False  # data in Buffer is not valid
                 print("RS232 - FAILED - Ergobike not responding!")

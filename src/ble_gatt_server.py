@@ -5,6 +5,9 @@ import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
 import ble_conf
+from prettytable import PrettyTable
+import numpy as np
+
 
 
 try:
@@ -335,23 +338,28 @@ class Indoor_Bike_Data(Characteristic):
                  ]
         ble.ftm_ib()
 
+        # figured out, that in ZWIFT, speed is calculated based on the power,
+        # so I skipped speed in the transmission and now power and cadence is
+        # shown correct. this might change when riding in sim mode?
+
         # Build Instantaneous Speed data - little endian
         # convert to uint16
-        uint_speed = int(ble.speed) & 0xFFFF
-        value[3] = (uint_speed & 0xFF00) >> 8
-        value[2] = (uint_speed & 0xFF)
+        # uint_speed = int(ble.speed) & 0xFFFF
+        # value[3] = (np.uint16(uint_speed) & 0xFF00) >> 8
+        # value[2] = (np.uint16(uint_speed) & 0xFF)
 
         # Build Instantaneous Cadence data - little endian
         # convert to uint16
-        uint_cadence = int(ble.cadence) & 0xFFFF
-        value[5] = (uint_cadence & 0xFF00) >> 8
-        value[4] = (uint_cadence & 0xFF)
+        # times 2, since in test is was just half the cadence
+        uint_cadence = int(ble.cadence * 2) & 0xFFFF
+        value[3] = (np.uint16(uint_cadence) & 0xFF00) >> 8
+        value[2] = (np.uint16(uint_cadence) & 0xFF)
 
         # Build Instantaneous Power data - little endian
         # convert to sint16-> do nothing
-        uint_power = int(ble.power)
-        value[7] = (uint_power & 0xFF00) >> 8
-        value[6] = (uint_power & 0xFF)
+        # uint_power = int(ble.power)
+        value[5] = (np.int16(ble.power) & 0xFF00) >> 8
+        value[4] = (np.int16(ble.power) & 0xFF)
 
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return self.notifying
@@ -362,7 +370,7 @@ class Indoor_Bike_Data(Characteristic):
         if not self.notifying:
             return
 
-        GObject.timeout_add(1000, self.ib_data_cb)
+        GObject.timeout_add(2000, self.ib_data_cb)
 
     def StartNotify(self):
         if self.notifying:
@@ -493,28 +501,32 @@ class CSCMeasurement(Characteristic):
         ble.Transmit_csc()
 
         # Build revolution data - little endian
-        value[4] = (ble.wheel_revolutions & 0xFF000000) >> 24
-        value[3] = (ble.wheel_revolutions & 0xFF0000) >> 16
-        value[2] = (ble.wheel_revolutions & 0xFF00) >> 8
-        value[1] = (ble.wheel_revolutions & 0xFF)
-        # & 0xFFFF is to convert int to uint16
-        time_in_1024_sec = int(ble.rev_time) & 0xFFFF
-        value[6] = (time_in_1024_sec & 0xFF00) >> 8
-        value[5] = (time_in_1024_sec & 0xFF)
-        # print("BLE GATT - Revolution time: ", time_in_1024_sec)
+        value[4] = (np.uint32(ble.wheel_revolutions) & 0xFF000000) >> 24
+        value[3] = (np.uint32(ble.wheel_revolutions) & 0xFF0000) >> 16
+        value[2] = (np.uint32(ble.wheel_revolutions) & 0xFF00) >> 8
+        value[1] = (np.uint32(ble.wheel_revolutions) & 0xFF)
+        # & 0xFFFF was to convert int to uint, but not to 16 Bits
+        # np.uint16 is correct
+        time_in_1024_sec = int(ble.rev_time)
+        value[6] = (np.uint16(time_in_1024_sec) & 0xFF00) >> 8
+        value[5] = (np.uint16(time_in_1024_sec) & 0xFF)
         # Build crank (stroke) data - little endian
-        value[8] = (ble.stroke_count & 0xFF00) >> 8
-        value[7] = (ble.stroke_count & 0xFF)
-        # & 0xFFFF is to convert int to uint16
-        time_in_1024_sec = int(ble.last_stroke_time) & 0xFFFF
-        value[10] = (time_in_1024_sec & 0xFF00) >> 8
-        value[9] = (time_in_1024_sec & 0xFF)
+        value[8] = (np.uint16(ble.stroke_count) & 0xFF00) >> 8
+        value[7] = (np.uint16(ble.stroke_count) & 0xFF)
+        # & 0xFFFF was to convert int to uint, but not to 16 Bits
+        # np.uint16 is correct
+        time_in_1024_sec = int(ble.last_stroke_time)
+        value[10] = (np.uint16(time_in_1024_sec) & 0xFF00) >> 8
+        value[9] = (np.uint16(time_in_1024_sec) & 0xFF)
         # print("BLE GATT - Stroke time: ", time_in_1024_sec)
 
         print('BLE GATT - CSC - Measurement: ', end="")
-        for i, val in enumerate(value):
-            print(hex(value[i]), "| ", end="")
-        print(i + 1, "chars")
+        # for i, val in enumerate(value):
+        #     print(hex(value[i]), "| ", end="")
+        # print(i + 1, "chars")
+        t = PrettyTable(['Wheel revolutions', 'Rev time', 'Cadence', 'stroke time'])
+        t.add_row([ble.wheel_revolutions, int(ble.rev_time), ble.stroke_count, int(ble.last_stroke_time)])
+        print(t)
 
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return self.notifying
@@ -524,8 +536,9 @@ class CSCMeasurement(Characteristic):
 
         if not self.notifying:
             return
-
-        GObject.timeout_add(1000, self.csc_msrmt_cb)
+        # set to more than 1000ms to avoid zero cadence, because if cadence is
+        # lower than 60 RPM it takes more than one second to increment
+        GObject.timeout_add(3000, self.csc_msrmt_cb)
 
     def StartNotify(self):
         if self.notifying:
@@ -597,33 +610,30 @@ class CyclingPowerMeasurement(Characteristic):
                  dbus.Byte(0), dbus.Byte(0)   # Last Crank Time
                  ]
 
-        # Flags is 16bits
-        # power in watts - 16 bits
-
         ble.Transmit_cp()
 
         # Build kcal data - little endian
-        value[3] = (ble.power & 0xFF00) >> 8
-        value[2] = (ble.power & 0xFF)
-
+        value[3] = (np.int16(ble.power) & 0xFF00) >> 8
+        value[2] = (np.int16(ble.power) & 0xFF)
         # Build revolution data - little endian
-        value[7] = (ble.wheel_revolutions & 0xFF000000) >> 24
-        value[6] = (ble.wheel_revolutions & 0xFF0000) >> 16
-        value[5] = (ble.wheel_revolutions & 0xFF00) >> 8
-        value[4] = (ble.wheel_revolutions & 0xFF)
-        # & 0xFFFF is to convert int to uint16
+        value[7] = (np.uint32(ble.wheel_revolutions) & 0xFF000000) >> 24
+        value[6] = (np.uint32(ble.wheel_revolutions) & 0xFF0000) >> 16
+        value[5] = (np.uint32(ble.wheel_revolutions) & 0xFF00) >> 8
+        value[4] = (np.uint32(ble.wheel_revolutions) & 0xFF)
+        # & 0xFFFF was to convert int to uint, but not to 16 Bits
+        # np.uint16 is correct
         # this has a basis of 2048 seconds and is multiplied by two
-        time_in_2048_sec = (int(ble.rev_time) * 2) & 0xFFFF
-        value[9] = (time_in_2048_sec & 0xFF00) >> 8
-        value[8] = (time_in_2048_sec & 0xFF)
-
+        time_in_2048_sec = (int(ble.rev_time) * 2)
+        value[9] = (np.uint16(time_in_2048_sec) & 0xFF00) >> 8
+        value[8] = (np.uint16(time_in_2048_sec) & 0xFF)
         # Build crank (stroke) data - little endian
-        value[11] = (ble.stroke_count & 0xFF00) >> 8
-        value[10] = (ble.stroke_count & 0xFF)
-        # & 0xFFFF is to convert int to uint16
-        time_in_1024_sec = int(ble.last_stroke_time) & 0xFFFF
-        value[13] = (time_in_1024_sec & 0xFF00) >> 8
-        value[12] = (time_in_1024_sec & 0xFF)
+        value[11] = (np.uint16(ble.stroke_count) & 0xFF00) >> 8
+        value[10] = (np.uint16(ble.stroke_count) & 0xFF)
+        # & 0xFFFF was to convert int to uint, but not to 16 Bits
+        # np.uint16 is correct
+        time_in_1024_sec = int(ble.last_stroke_time)
+        value[13] = (np.uint16(time_in_1024_sec) & 0xFF00) >> 8
+        value[12] = (np.uint16(time_in_1024_sec) & 0xFF)
 
         print('BLE GATT - CP - Measurement: ', end="")
         for i, val in enumerate(value):
@@ -637,8 +647,9 @@ class CyclingPowerMeasurement(Characteristic):
         print('BLE GATT - CP - Update Power Measurement')
         if not self.notifying:
             return
-
-        GObject.timeout_add(1000, self.cp_msrmt_cb)
+        # set to more than 1000ms to avoid zero cadence, because if cadence is
+        # lower than 60 RPM it takes more than one second to increment
+        GObject.timeout_add(3000, self.cp_msrmt_cb)
 
     def StartNotify(self):
         if self.notifying:
