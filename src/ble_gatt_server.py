@@ -5,9 +5,8 @@ import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
 import ble_conf
-from prettytable import PrettyTable
+# from prettytable import PrettyTable
 import numpy as np
-
 
 
 try:
@@ -524,9 +523,9 @@ class CSCMeasurement(Characteristic):
         # for i, val in enumerate(value):
         #     print(hex(value[i]), "| ", end="")
         # print(i + 1, "chars")
-        t = PrettyTable(['Wheel revolutions', 'Rev time', 'Cadence', 'stroke time'])
-        t.add_row([ble.wheel_revolutions, int(ble.rev_time), ble.stroke_count, int(ble.last_stroke_time)])
-        print(t)
+        # t = PrettyTable(['Wheel revolutions', 'Rev time', 'Cadence', 'stroke time'])
+        # t.add_row([ble.wheel_revolutions, int(ble.rev_time), ble.stroke_count, int(ble.last_stroke_time)])
+        # print(t)
 
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return self.notifying
