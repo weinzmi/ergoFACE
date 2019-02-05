@@ -1,0 +1,18 @@
+# trainings
+this folder is the standard location of all the recorded training files.
+as soon as a training session starts, a CSV file is create here,
+with name: date-time.csv
+
+the structure of the CSV file:
+
+```csv
+TIME,POWER,CADENCE,DUTYCYCLE
+20190106-202935,90,75.0,65.56768729999183
+20190106-202936,90,75.0,65.56768729999183
+20190106-202937,90,75.0,65.56768729999183
+20190106-202938,90,75.0,65.56768729999183
+20190106-202939,90,75.0,65.56768729999183
+20190106-202940,90,75.0,65.56768729999183
+20190106-202941,90,75.0,65.5676872999918
+...
+```
