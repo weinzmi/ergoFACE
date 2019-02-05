@@ -32,6 +32,30 @@ or even complete disassembly of the cockpit unit and replace it permanent with a
   * Bluetooth heart rate sensor
 * Share the training sessions with social networks
 
+## Usage
+### ERG Mode with RS232 using BLE GATT Server to notify speed, cadence and power
+* clone repository
+* install requirements - see requirements.txt
+* copy ergoFACE.service from lib\systemd\system to your local system
+''' bash
+sudo chmod 644 /lib/systemd/system/ergoFACE.service
+'''
+* configure
+''' bash
+sudo systemctl daemon-reload
+ sudo systemctl enable ergoFACE.service
+ '''
+ * reboot
+ ''' bash
+ sudo reboot
+ '''
+ * check status of service
+ ''' bash
+ sudo systemctl status ergoFACE.service
+ '''
+ 
+
+
 more information is documented in the wiki:
 
 https://github.com/weinzmi/ergoFACE/wiki

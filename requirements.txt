@@ -1,6 +1,11 @@
-# pytest
-# pycodestyle
+# for SIM mode - ergoFACE is connected via analog signal cable
+# simulating wattage; w/o cockpit
 transitions
 pygraphviz
 IPython
 yaml
+
+# for ERG mode - ergoface is connected via RS232 cable
+# can be used for ZWIFT
+bluez
+serial
