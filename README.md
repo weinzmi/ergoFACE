@@ -37,22 +37,22 @@ or even complete disassembly of the cockpit unit and replace it permanent with a
 * clone repository
 * install requirements - see requirements.txt
 * copy ergoFACE.service from lib\systemd\system to your local system
-'''shell
+```shell
 sudo chmod 644 /lib/systemd/system/ergoFACE.service
-'''
+```
 * configure
-'''shell
+```shell
 sudo systemctl daemon-reload
  sudo systemctl enable ergoFACE.service
- '''
+ ```
  * reboot
- '''shell
+ ```shell
  sudo reboot
- '''
+ ```
  * check status of service
- '''shell
+ ```shell
  sudo systemctl status ergoFACE.service
- '''
+ ```
 
 
 
